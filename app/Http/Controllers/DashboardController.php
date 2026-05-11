@@ -10,41 +10,23 @@ use Illuminate\Support\Facades\Auth;
 class DashboardController extends Controller
 {
     /**
-     * Show the user dashboard.
+     * Show the multi-card dashboard — one card per device/rack.
      */
-    public function index(Request $request)
+    public function index()
     {
         $user = Auth::user();
-        $devices = $user->devices;
 
-        // Determine active device
-        $activeDevice = null;
-        if ($devices->count() > 0) {
-            if ($request->has('device_id')) {
-                $activeDevice = $devices->firstWhere('id', $request->device_id);
-            }
-            $activeDevice = $activeDevice ?? $devices->first();
-        }
+        // Load all devices with their latest sensor reading
+        $devices = $user->devices()
+            ->with('latestLog')
+            ->orderBy('created_at', 'asc')
+            ->get();
 
-        // Get latest sensor data for the active device
-        $latestLog = null;
-        $chartData = [];
-
-        if ($activeDevice) {
-            $latestLog = $activeDevice->latestLog;
-
-            // Get last 24h of data for initial chart render
-            $chartData = SensorLog::where('device_id', $activeDevice->id)
-                ->where('created_at', '>=', now()->subHours(24))
-                ->orderBy('created_at', 'asc')
-                ->get(['internal_temp', 'amonia_level', 'room_temp', 'humidity', 'created_at']);
-        }
-
-        return view('dashboard.index', compact('devices', 'activeDevice', 'latestLog', 'chartData'));
+        return view('dashboard.index', compact('devices'));
     }
 
     /**
-     * API: Get live sensor data for AJAX polling.
+     * AJAX: Get live sensor data for a specific device card.
      */
     public function liveData(Request $request)
     {
@@ -64,20 +46,20 @@ class DashboardController extends Controller
         return response()->json([
             'sensors' => $latestLog ? [
                 'internal_temp' => $latestLog->internal_temp,
-                'amonia_level' => $latestLog->amonia_level,
-                'room_temp' => $latestLog->room_temp,
-                'humidity' => $latestLog->humidity,
-                'timestamp' => $latestLog->created_at->format('H:i:s'),
+                'amonia_level'  => $latestLog->amonia_level,
+                'room_temp'     => $latestLog->room_temp,
+                'humidity'      => $latestLog->humidity,
+                'timestamp'     => $latestLog->created_at->format('H:i:s'),
             ] : null,
             'fan' => [
                 'status' => $device->fan_status,
-                'mode' => $device->operation_mode,
+                'mode'   => $device->operation_mode,
             ],
         ]);
     }
 
     /**
-     * API: Get chart data for AJAX polling.
+     * AJAX: Get chart data for a specific device.
      */
     public function chartData(Request $request)
     {
@@ -93,12 +75,11 @@ class DashboardController extends Controller
             return response()->json(['error' => 'Device not found'], 404);
         }
 
-        // Determine time range
         $since = match ($range) {
-            '1h' => now()->subHour(),
-            '6h' => now()->subHours(6),
+            '1h'  => now()->subHour(),
+            '6h'  => now()->subHours(6),
             '24h' => now()->subHours(24),
-            '7d' => now()->subDays(7),
+            '7d'  => now()->subDays(7),
             default => now()->subHours(24),
         };
 
@@ -108,24 +89,24 @@ class DashboardController extends Controller
             ->get(['internal_temp', 'amonia_level', 'room_temp', 'humidity', 'created_at']);
 
         return response()->json([
-            'labels' => $logs->pluck('created_at')->map(fn($d) => $d->format('H:i')),
+            'labels'        => $logs->pluck('created_at')->map(fn($d) => $d->format('H:i')),
             'internal_temp' => $logs->pluck('internal_temp'),
-            'amonia_level' => $logs->pluck('amonia_level'),
-            'room_temp' => $logs->pluck('room_temp'),
-            'humidity' => $logs->pluck('humidity'),
+            'amonia_level'  => $logs->pluck('amonia_level'),
+            'room_temp'     => $logs->pluck('room_temp'),
+            'humidity'      => $logs->pluck('humidity'),
         ]);
     }
 
     /**
-     * API: Control fan (toggle mode / fan status).
+     * AJAX: Control fan (toggle mode / fan status) for a specific device.
      */
     public function controlFan(Request $request)
     {
         $user = Auth::user();
 
         $request->validate([
-            'device_id' => 'required|integer',
-            'mode' => 'required|in:AUTO,MANUAL',
+            'device_id'  => 'required|integer',
+            'mode'       => 'required|in:AUTO,MANUAL',
             'fan_status' => 'required|in:ON,OFF',
         ]);
 
@@ -139,14 +120,14 @@ class DashboardController extends Controller
 
         $device->update([
             'operation_mode' => $request->mode,
-            'fan_status' => $request->fan_status,
+            'fan_status'     => $request->fan_status,
         ]);
 
         return response()->json([
             'success' => true,
             'fan' => [
                 'status' => $device->fan_status,
-                'mode' => $device->operation_mode,
+                'mode'   => $device->operation_mode,
             ],
         ]);
     }

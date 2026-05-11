@@ -15,7 +15,7 @@ class AdminDashboardController extends Controller
     public function index()
     {
         $totalUsers = User::count();
-        $totalDevices = Device::count();
+        $totalDevices = \App\Models\MasterDevice::count();
         $totalLogs = SensorLog::count();
 
         // Recent users

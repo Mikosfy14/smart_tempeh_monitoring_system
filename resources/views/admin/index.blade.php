@@ -30,7 +30,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-sm" style="color: var(--color-text-secondary);">Total Devices</p>
+                    <p class="text-sm" style="color: var(--color-text-secondary);">Whitelist Devices</p>
                     <p class="text-3xl font-bold">{{ $totalDevices }}</p>
                 </div>
             </div>

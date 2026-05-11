@@ -11,7 +11,8 @@ class Device extends Model
     protected $fillable = [
         'user_id',
         'device_name',
-        'device_token',
+        'device_id',
+        'label_rak',
         'operation_mode',
         'fan_status',
     ];
@@ -38,5 +39,13 @@ class Device extends Model
     public function latestLog()
     {
         return $this->hasOne(SensorLog::class)->latestOfMany();
+    }
+
+    /**
+     * Get the master device record.
+     */
+    public function masterDevice()
+    {
+        return $this->belongsTo(MasterDevice::class, 'device_id', 'device_id');
     }
 }

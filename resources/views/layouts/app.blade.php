@@ -29,21 +29,12 @@
             <span>Smart Tempeh Monitoring</span>
         </div>
 
-        {{-- Center: Device Selector --}}
+        {{-- Center: Add Device Button --}}
         <div class="flex items-center gap-3">
-            @if(isset($devices) && $devices->count() > 0)
-                <label for="device-selector" class="text-sm" style="color: var(--color-text-secondary);">Device:</label>
-                <select id="device-selector" class="device-select" onchange="switchDevice(this.value)">
-                    @foreach($devices as $device)
-                        <option value="{{ $device->id }}" {{ (isset($activeDevice) && $activeDevice->id == $device->id) ? 'selected' : '' }}>
-                            {{ $device->device_name }}
-                        </option>
-                    @endforeach
-                </select>
-                <span class="status-dot {{ isset($activeDevice) ? 'status-dot--online' : 'status-dot--offline' }}"></span>
-            @else
-                <span class="text-sm" style="color: var(--color-text-muted);">No devices linked</span>
-            @endif
+            <button class="btn btn-primary btn-sm" onclick="openModal('register-modal')" id="btn-add-device">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                Tambah Alat
+            </button>
         </div>
 
         {{-- Right: User + Logout --}}
@@ -87,15 +78,79 @@
         @yield('content')
     </main>
 
+    {{-- REGISTER DEVICE MODAL --}}
+    <div class="modal-overlay" id="register-modal">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="modal-title mb-0">Daftarkan Rak Baru</h3>
+                <button class="btn-icon" onclick="closeModal('register-modal')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <p class="text-sm mb-4" style="color: var(--color-text-secondary);">Masukkan Device ID yang tercetak pada perangkat ESP32 Anda.</p>
+            <div id="register-errors" class="alert alert-error mb-4" style="display: none;"></div>
+            <form id="register-device-form" onsubmit="registerDevice(event)">
+                <div class="mb-4">
+                    <label class="form-label">Device ID</label>
+                    <input type="text" name="device_id" class="form-input" placeholder="Contoh: TEMPE-001" required id="reg-device-id" style="text-transform: uppercase;">
+                </div>
+                <div class="mb-6">
+                    <label class="form-label">Label Rak <span style="color: var(--color-text-muted);">(opsional)</span></label>
+                    <input type="text" name="label_rak" class="form-input" placeholder="Contoh: Rak Tempe Lantai 2" id="reg-label-rak">
+                </div>
+                <button type="submit" class="btn btn-primary w-full" id="btn-submit-register">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                    Daftarkan Alat
+                </button>
+            </form>
+        </div>
+    </div>
+
     @vite(['resources/js/app.js'])
 
     <script>
-        // CSRF token for AJAX
         window.csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
-        // Device switching
-        function switchDevice(deviceId) {
-            window.location.href = '/dashboard?device_id=' + deviceId;
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        async function registerDevice(e) {
+            e.preventDefault();
+            const errEl = document.getElementById('register-errors');
+            errEl.style.display = 'none';
+            const btn = document.getElementById('btn-submit-register');
+            btn.disabled = true;
+            btn.textContent = 'Mendaftarkan...';
+
+            const body = {
+                device_id: document.getElementById('reg-device-id').value.toUpperCase(),
+                label_rak: document.getElementById('reg-label-rak').value || null,
+            };
+
+            try {
+                const res = await fetch('{{ route("device.register") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.csrfToken, 'Accept': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+
+                if (!data.success) {
+                    errEl.textContent = data.message;
+                    errEl.style.display = 'flex';
+                    btn.disabled = false;
+                    btn.textContent = 'Daftarkan Alat';
+                    return;
+                }
+
+                closeModal('register-modal');
+                document.getElementById('register-device-form').reset();
+                window.location.reload();
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'Daftarkan Alat';
+                window.location.reload();
+            }
         }
 
         // Auto-hide flash messages
