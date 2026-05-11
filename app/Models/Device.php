@@ -15,7 +15,19 @@ class Device extends Model
         'label_rak',
         'operation_mode',
         'fan_status',
+        'temp_threshold',
+        'amonia_threshold',
+        'humidity_threshold',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'temp_threshold'     => 'float',
+            'amonia_threshold'   => 'float',
+            'humidity_threshold' => 'float',
+        ];
+    }
 
     /**
      * Get the user that owns this device.

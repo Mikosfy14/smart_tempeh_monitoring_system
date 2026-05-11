@@ -86,9 +86,25 @@ class UserController extends Controller
 
     /**
      * Delete a user (AJAX).
+     * Protection: cannot delete user who still has active devices.
      */
     public function destroy(Request $request, User $user)
     {
+        // Check if user still has linked devices
+        $deviceCount = $user->devices()->count();
+        if ($deviceCount > 0) {
+            $message = "Tidak dapat menghapus user \"{$user->name}\" karena masih memiliki {$deviceCount} alat terdaftar. Lepas semua alat terlebih dahulu.";
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 422);
+            }
+
+            return redirect()->route('admin.users')->with('error', $message);
+        }
+
         $user->delete();
 
         if ($request->wantsJson()) {
