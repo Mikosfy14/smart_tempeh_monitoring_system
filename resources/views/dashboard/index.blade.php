@@ -20,7 +20,9 @@
             Daftarkan rak pertama Anda dengan memasukkan Device ID yang tercetak pada perangkat ESP32.
         </p>
         <button class="btn btn-primary btn-lg" onclick="openModal('register-modal')" id="btn-empty-register">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
             Daftarkan Rak Pertama Anda
         </button>
     </div>
@@ -43,7 +45,9 @@
                 <div class="flex items-center gap-2">
                     <span class="status-dot {{ $log ? 'status-dot--online' : 'status-dot--offline' }}"></span>
                     <button class="btn-icon" style="color: var(--color-text-muted);" onclick="unregisterDevice({{ $device->id }}, '{{ $device->label_rak ?? $device->device_id }}')" title="Lepas alat">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                     </button>
                 </div>
             </div>
@@ -77,7 +81,9 @@
                 <div class="flex items-center gap-2">
                     <span class="badge {{ $device->fan_status === 'ON' ? 'badge-green' : 'badge-red' }}" data-fan-badge>{{ $device->fan_status }}</span>
                     <button class="power-btn power-btn--sm {{ $device->fan_status === 'ON' ? 'on' : '' }}" data-fan-btn {{ $device->operation_mode === 'AUTO' ? 'disabled' : '' }} onclick="toggleCardFan({{ $device->id }})">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
                     </button>
                 </div>
             </div>
@@ -89,7 +95,9 @@
 
             {{-- Detail Button --}}
             <a href="{{ route('device.detail', $device->id) }}" class="btn btn-secondary btn-sm w-full mt-3" style="text-align: center;" id="btn-detail-{{ $device->id }}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
                 Lihat Detail
             </a>
         </div>
@@ -102,7 +110,9 @@
 <div class="modal-overlay" id="unregister-modal">
     <div class="modal-content text-center">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4" style="background: rgba(248, 113, 113, 0.1);">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" style="color: var(--color-accent-red);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" style="color: var(--color-accent-red);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
         </div>
         <h3 class="text-lg font-bold mb-2">Lepas Alat</h3>
         <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Lepas <strong id="unreg-device-name" class="text-white"></strong>? Data histori sensor tetap tersimpan.</p>
@@ -117,139 +127,164 @@
 
 @push('scripts')
 <script>
-// ============================================
-// MULTI-CARD POLLING — Poll all device cards every 5s
-// ============================================
-const deviceCards = document.querySelectorAll('.device-card');
-const cardStates = {};
+    // ============================================
+    // MULTI-CARD POLLING — Poll all device cards every 5s
+    // ============================================
+    const deviceCards = document.querySelectorAll('.device-card');
+    const cardStates = {};
 
-// Initialize card states
-deviceCards.forEach(card => {
-    const id = card.dataset.deviceId;
-    const modeLabel = card.querySelector('[data-mode-label]');
-    cardStates[id] = {
-        mode: modeLabel ? modeLabel.textContent.trim() : 'AUTO',
-        fanStatus: card.querySelector('[data-fan-badge]')?.textContent.trim() || 'OFF',
-    };
-});
+    // Initialize card states
+    deviceCards.forEach(card => {
+        const id = card.dataset.deviceId;
+        const modeLabel = card.querySelector('[data-mode-label]');
+        cardStates[id] = {
+            mode: modeLabel ? modeLabel.textContent.trim() : 'AUTO',
+            fanStatus: card.querySelector('[data-fan-badge]')?.textContent.trim() || 'OFF',
+        };
+    });
 
-// Poll all cards
-if (deviceCards.length > 0) {
-    setInterval(pollAllCards, 5000);
-}
+    // Poll all cards
+    if (deviceCards.length > 0) {
+        setInterval(pollAllCards, 5000);
+    }
 
-async function pollAllCards() {
-    for (const card of deviceCards) {
-        const deviceId = card.dataset.deviceId;
+    async function pollAllCards() {
+        for (const card of deviceCards) {
+            const deviceId = card.dataset.deviceId;
+            try {
+                const res = await fetch(`/api/dashboard/live?device_id=${deviceId}`, {
+                    headers: {
+                        'X-CSRF-TOKEN': window.csrfToken,
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (data.sensors) {
+                    updateCardSensors(card, data.sensors);
+                }
+                if (data.fan) {
+                    updateCardFan(card, deviceId, data.fan.mode, data.fan.status);
+                }
+            } catch (e) {
+                /* silent fail */ }
+        }
+    }
+
+    function updateCardSensors(card, s) {
+        const set = (attr, val, suffix) => {
+            const el = card.querySelector(`[data-sensor="${attr}"]`);
+            if (el) el.textContent = val !== null ? parseFloat(val).toFixed(1) + suffix : '--';
+        };
+        set('internal_temp', s.internal_temp, '°C');
+        set('amonia_level', s.amonia_level, ' ppm');
+        set('room_temp', s.room_temp, '°C');
+        set('humidity', s.humidity, '%');
+        const upd = card.querySelector('[data-last-update]');
+        if (upd && s.timestamp) upd.textContent = 'Update: ' + s.timestamp;
+
+        // Critical pulse if temp > 35
+        if (parseFloat(s.internal_temp) > 35) {
+            card.classList.add('animate-pulse-critical');
+        } else {
+            card.classList.remove('animate-pulse-critical');
+        }
+    }
+
+    function updateCardFan(card, deviceId, mode, status) {
+        cardStates[deviceId] = {
+            mode,
+            fanStatus: status
+        };
+        const modeLabel = card.querySelector('[data-mode-label]');
+        const modeToggle = card.querySelector('[data-mode-toggle]');
+        const fanBadge = card.querySelector('[data-fan-badge]');
+        const fanBtn = card.querySelector('[data-fan-btn]');
+
+        if (modeLabel) {
+            modeLabel.textContent = mode;
+            modeLabel.style.color = mode === 'AUTO' ? 'var(--color-accent-green)' : 'var(--color-accent-amber)';
+        }
+        if (modeToggle) modeToggle.classList.toggle('active', mode === 'MANUAL');
+        if (fanBadge) {
+            fanBadge.textContent = status;
+            fanBadge.className = 'badge ' + (status === 'ON' ? 'badge-green' : 'badge-red');
+        }
+        if (fanBtn) {
+            fanBtn.classList.toggle('on', status === 'ON');
+            fanBtn.disabled = mode === 'AUTO';
+        }
+    }
+
+    // ============================================
+    // FAN CONTROL PER CARD
+    // ============================================
+    async function toggleCardMode(deviceId) {
+        const state = cardStates[deviceId];
+        const newMode = state.mode === 'AUTO' ? 'MANUAL' : 'AUTO';
+        const newFan = newMode === 'AUTO' ? 'OFF' : state.fanStatus;
+        await sendCardFanControl(deviceId, newMode, newFan);
+    }
+
+    async function toggleCardFan(deviceId) {
+        const state = cardStates[deviceId];
+        if (state.mode === 'AUTO') return;
+        const newFan = state.fanStatus === 'ON' ? 'OFF' : 'ON';
+        await sendCardFanControl(deviceId, state.mode, newFan);
+    }
+
+    async function sendCardFanControl(deviceId, mode, fanStatus) {
+        const card = document.getElementById('device-card-' + deviceId);
+        updateCardFan(card, deviceId, mode, fanStatus); // optimistic
+
         try {
-            const res = await fetch(`/api/dashboard/live?device_id=${deviceId}`, {
-                headers: { 'X-CSRF-TOKEN': window.csrfToken, 'Accept': 'application/json' }
+            const res = await fetch('/api/device/control', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    device_id: deviceId,
+                    mode,
+                    fan_status: fanStatus
+                })
             });
             const data = await res.json();
-            if (data.sensors) {
-                updateCardSensors(card, data.sensors);
-            }
-            if (data.fan) {
-                updateCardFan(card, deviceId, data.fan.mode, data.fan.status);
-            }
-        } catch (e) { /* silent fail */ }
+            if (data.success) updateCardFan(card, deviceId, data.fan.mode, data.fan.status);
+        } catch (e) {
+            console.error('Fan control error:', e);
+        }
     }
-}
 
-function updateCardSensors(card, s) {
-    const set = (attr, val, suffix) => {
-        const el = card.querySelector(`[data-sensor="${attr}"]`);
-        if (el) el.textContent = val !== null ? parseFloat(val).toFixed(1) + suffix : '--';
-    };
-    set('internal_temp', s.internal_temp, '°C');
-    set('amonia_level', s.amonia_level, ' ppm');
-    set('room_temp', s.room_temp, '°C');
-    set('humidity', s.humidity, '%');
-    const upd = card.querySelector('[data-last-update]');
-    if (upd && s.timestamp) upd.textContent = 'Update: ' + s.timestamp;
-
-    // Critical pulse if temp > 35
-    if (parseFloat(s.internal_temp) > 35) {
-        card.classList.add('animate-pulse-critical');
-    } else {
-        card.classList.remove('animate-pulse-critical');
+    // ============================================
+    // UNREGISTER DEVICE
+    // ============================================
+    function unregisterDevice(id, name) {
+        document.getElementById('unreg-device-id').value = id;
+        document.getElementById('unreg-device-name').textContent = name;
+        openModal('unregister-modal');
     }
-}
 
-function updateCardFan(card, deviceId, mode, status) {
-    cardStates[deviceId] = { mode, fanStatus: status };
-    const modeLabel = card.querySelector('[data-mode-label]');
-    const modeToggle = card.querySelector('[data-mode-toggle]');
-    const fanBadge = card.querySelector('[data-fan-badge]');
-    const fanBtn = card.querySelector('[data-fan-btn]');
-
-    if (modeLabel) {
-        modeLabel.textContent = mode;
-        modeLabel.style.color = mode === 'AUTO' ? 'var(--color-accent-green)' : 'var(--color-accent-amber)';
+    async function confirmUnregister() {
+        const deviceId = document.getElementById('unreg-device-id').value;
+        try {
+            await fetch('{{ route("device.unregister") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    device_id: deviceId
+                })
+            });
+            closeModal('unregister-modal');
+            window.location.reload();
+        } catch (e) {
+            alert('Gagal melepas alat.');
+        }
     }
-    if (modeToggle) modeToggle.classList.toggle('active', mode === 'MANUAL');
-    if (fanBadge) {
-        fanBadge.textContent = status;
-        fanBadge.className = 'badge ' + (status === 'ON' ? 'badge-green' : 'badge-red');
-    }
-    if (fanBtn) {
-        fanBtn.classList.toggle('on', status === 'ON');
-        fanBtn.disabled = mode === 'AUTO';
-    }
-}
-
-// ============================================
-// FAN CONTROL PER CARD
-// ============================================
-async function toggleCardMode(deviceId) {
-    const state = cardStates[deviceId];
-    const newMode = state.mode === 'AUTO' ? 'MANUAL' : 'AUTO';
-    const newFan = newMode === 'AUTO' ? 'OFF' : state.fanStatus;
-    await sendCardFanControl(deviceId, newMode, newFan);
-}
-
-async function toggleCardFan(deviceId) {
-    const state = cardStates[deviceId];
-    if (state.mode === 'AUTO') return;
-    const newFan = state.fanStatus === 'ON' ? 'OFF' : 'ON';
-    await sendCardFanControl(deviceId, state.mode, newFan);
-}
-
-async function sendCardFanControl(deviceId, mode, fanStatus) {
-    const card = document.getElementById('device-card-' + deviceId);
-    updateCardFan(card, deviceId, mode, fanStatus); // optimistic
-
-    try {
-        const res = await fetch('/api/device/control', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.csrfToken, 'Accept': 'application/json' },
-            body: JSON.stringify({ device_id: deviceId, mode, fan_status: fanStatus })
-        });
-        const data = await res.json();
-        if (data.success) updateCardFan(card, deviceId, data.fan.mode, data.fan.status);
-    } catch (e) { console.error('Fan control error:', e); }
-}
-
-// ============================================
-// UNREGISTER DEVICE
-// ============================================
-function unregisterDevice(id, name) {
-    document.getElementById('unreg-device-id').value = id;
-    document.getElementById('unreg-device-name').textContent = name;
-    openModal('unregister-modal');
-}
-
-async function confirmUnregister() {
-    const deviceId = document.getElementById('unreg-device-id').value;
-    try {
-        await fetch('{{ route("device.unregister") }}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.csrfToken, 'Accept': 'application/json' },
-            body: JSON.stringify({ device_id: deviceId })
-        });
-        closeModal('unregister-modal');
-        window.location.reload();
-    } catch (e) { alert('Gagal melepas alat.'); }
-}
 </script>
 @endpush

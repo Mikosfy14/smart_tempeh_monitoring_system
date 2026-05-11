@@ -20,11 +20,11 @@
         <form method="GET" action="{{ route('admin.sensor-logs') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end" id="filter-form">
             <div>
                 <label class="form-label">Tanggal Mulai</label>
-                <input type="date" name="date_from" class="form-input" value="{{ request('date_from') }}" id="filter-date-from">
+                <input type="text" name="date_from" class="form-input flatpickr-input" value="{{ request('date_from') }}" placeholder="YYYY-MM-DD" id="filter-date-from">
             </div>
             <div>
                 <label class="form-label">Tanggal Akhir</label>
-                <input type="date" name="date_to" class="form-input" value="{{ request('date_to') }}" id="filter-date-to">
+                <input type="text" name="date_to" class="form-input flatpickr-input" value="{{ request('date_to') }}" placeholder="YYYY-MM-DD" id="filter-date-to">
             </div>
             <div>
                 <label class="form-label">Device</label>
@@ -175,5 +175,11 @@ async function confirmPurge() {
         btn.textContent = 'Hapus Sekarang';
     }
 }
+
+// ============================================
+// FLATPICKR INITIALIZATION
+// ============================================
+flatpickr('#filter-date-from', { allowInput: true, dateFormat: 'Y-m-d' });
+flatpickr('#filter-date-to', { allowInput: true, dateFormat: 'Y-m-d' });
 </script>
 @endpush

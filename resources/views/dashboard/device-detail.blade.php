@@ -134,11 +134,11 @@
                 <form action="{{ route('device.export-pdf', $device->id) }}" method="GET" id="pdf-form">
                     <div class="mb-3">
                         <label class="text-xs" style="color: var(--color-text-muted);">Tanggal Mulai</label>
-                        <input type="date" name="date_from" class="form-input" required id="pdf-date-from" value="{{ now()->subDays(7)->format('Y-m-d') }}" style="font-size: 0.85rem;">
+                        <input type="text" name="date_from" class="form-input flatpickr-input" required id="pdf-date-from" value="{{ now()->subDays(7)->format('Y-m-d') }}" placeholder="YYYY-MM-DD" style="font-size: 0.85rem;">
                     </div>
                     <div class="mb-4">
                         <label class="text-xs" style="color: var(--color-text-muted);">Tanggal Akhir</label>
-                        <input type="date" name="date_to" class="form-input" required id="pdf-date-to" value="{{ now()->format('Y-m-d') }}" style="font-size: 0.85rem;">
+                        <input type="text" name="date_to" class="form-input flatpickr-input" required id="pdf-date-to" value="{{ now()->format('Y-m-d') }}" placeholder="YYYY-MM-DD" style="font-size: 0.85rem;">
                     </div>
                     <button type="submit" class="btn btn-secondary btn-sm w-full" id="btn-export-pdf">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -359,5 +359,11 @@ async function saveThresholds(e) {
     btn.textContent = 'Simpan Ambang Batas';
     setTimeout(() => { feedback.style.display = 'none'; }, 3000);
 }
+
+// ============================================
+// FLATPICKR INITIALIZATION
+// ============================================
+flatpickr('#pdf-date-from', { allowInput: true, dateFormat: 'Y-m-d' });
+flatpickr('#pdf-date-to', { allowInput: true, dateFormat: 'Y-m-d' });
 </script>
 @endpush
