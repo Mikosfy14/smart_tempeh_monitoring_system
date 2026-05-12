@@ -5,11 +5,17 @@
 @section('content')
 <div class="stagger-children" style="max-width: 720px; margin: 0 auto;">
 
-    {{-- Back Button --}}
-    <a href="{{ route('dashboard') }}" class="btn btn-secondary btn-sm mb-6" id="btn-back-dashboard">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
-        Kembali ke Dashboard
-    </a>
+    {{-- Header & Back Button --}}
+    <div class="flex flex-col md:flex-row md:items-center justify-center mb-8 relative gap-4">
+        <a href="{{ route('dashboard') }}" class="btn btn-secondary btn-sm md:absolute md:left-0 self-start" id="btn-back-dashboard">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            Kembali
+        </a>
+        <div class="text-left md:text-center w-full">
+            <h1 class="text-2xl font-bold">Profil Pengguna</h1>
+            <p class="text-sm mt-1" style="color: var(--color-text-muted);">Kelola informasi akun Anda</p>
+        </div>
+    </div>
 
     {{-- =============================== --}}
     {{-- PROFILE INFORMATION --}}

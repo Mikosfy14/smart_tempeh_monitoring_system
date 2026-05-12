@@ -5,19 +5,17 @@
 @section('content')
 <div class="stagger-children">
 
-    {{-- Back Button & Header --}}
-    <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-4">
-            <a href="{{ route('dashboard') }}" class="btn btn-secondary btn-sm" id="btn-back-dashboard">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                Kembali
-            </a>
-            <div>
-                <h1 class="text-xl font-bold">{{ $device->label_rak ?? $device->device_name }}</h1>
-                <p class="text-xs" style="color: var(--color-text-muted);">ID: {{ $device->device_id }}</p>
-            </div>
+    {{-- Header & Back Button --}}
+    <div class="flex flex-col md:flex-row md:items-center justify-center mb-8 relative gap-4">
+        <a href="{{ route('dashboard') }}" class="btn btn-secondary btn-sm md:absolute md:left-0 self-start" id="btn-back-dashboard">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            Kembali
+        </a>
+        <div class="text-left md:text-center w-full">
+            <h1 class="text-2xl font-bold">{{ $device->label_rak ?? $device->device_name }}</h1>
+            <p class="text-sm mt-1" style="color: var(--color-text-muted);">ID: {{ $device->device_id }}</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 md:absolute md:right-0 self-start md:self-center">
             <span class="badge {{ $device->operation_mode === 'AUTO' ? 'badge-green' : 'badge-amber' }}" id="device-mode-badge">{{ $device->operation_mode }}</span>
             <span class="status-dot {{ $device->latestLog ? 'status-dot--online' : 'status-dot--offline' }}"></span>
         </div>
@@ -107,27 +105,6 @@
                 </div>
             </div>
 
-            {{-- Threshold Settings --}}
-            <div class="card-static">
-                <h3 class="text-sm font-bold mb-4">Ambang Batas Notifikasi</h3>
-                <form id="threshold-form" onsubmit="saveThresholds(event)">
-                    <div class="mb-3">
-                        <label class="text-xs" style="color: var(--color-text-muted);">Suhu Maks (°C)</label>
-                        <input type="number" step="0.1" class="form-input" id="threshold-temp" value="{{ $device->temp_threshold ?? 35.0 }}" style="font-size: 0.85rem;">
-                    </div>
-                    <div class="mb-3">
-                        <label class="text-xs" style="color: var(--color-text-muted);">Amonia Maks (ppm)</label>
-                        <input type="number" step="0.1" class="form-input" id="threshold-amonia" value="{{ $device->amonia_threshold ?? 25.0 }}" style="font-size: 0.85rem;">
-                    </div>
-                    <div class="mb-4">
-                        <label class="text-xs" style="color: var(--color-text-muted);">Kelembapan Maks (%)</label>
-                        <input type="number" step="0.1" class="form-input" id="threshold-humidity" value="{{ $device->humidity_threshold ?? 90.0 }}" style="font-size: 0.85rem;">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-sm w-full" id="btn-save-thresholds">Simpan Ambang Batas</button>
-                </form>
-                <div id="threshold-feedback" class="text-xs mt-2" style="color: var(--color-accent-green); display: none;"></div>
-            </div>
-
             {{-- PDF Export --}}
             <div class="card-static">
                 <h3 class="text-sm font-bold mb-4">Cetak Laporan PDF</h3>
@@ -145,6 +122,20 @@
                         Download PDF
                     </button>
                 </form>
+            </div>
+
+            {{-- Edit Device Cue --}}
+            <div class="card-static">
+                <h3 class="text-sm font-bold mb-3">Pengaturan Alat</h3>
+                <p class="text-xs mb-4" style="color: var(--color-text-muted);">
+                    Ubah nama alat atau sesuaikan ambang batas notifikasi peringatan sensor.
+                </p>
+                <a href="{{ route('device.edit', $device->id) }}" class="btn btn-secondary btn-sm w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Edit Detail Alat
+                </a>
             </div>
 
         </div>
@@ -240,11 +231,16 @@ async function pollSensorData() {
             headers: { 'X-CSRF-TOKEN': window.csrfToken, 'Accept': 'application/json' }
         });
         const data = await res.json();
+        
+        const thresholdTemp = {{ $device->temp_threshold ?? 35.0 }};
+        const thresholdAmonia = {{ $device->amonia_threshold ?? 25.0 }};
+        const thresholdHumidity = {{ $device->humidity_threshold ?? 90.0 }};
+
         if (data.sensors) {
-            updateVal('val-internal-temp', data.sensors.internal_temp, parseFloat(document.getElementById('threshold-temp').value));
-            updateVal('val-amonia', data.sensors.amonia_level, parseFloat(document.getElementById('threshold-amonia').value));
+            updateVal('val-internal-temp', data.sensors.internal_temp, thresholdTemp);
+            updateVal('val-amonia', data.sensors.amonia_level, thresholdAmonia);
             updateVal('val-room-temp', data.sensors.room_temp, null);
-            updateVal('val-humidity', data.sensors.humidity, parseFloat(document.getElementById('threshold-humidity').value));
+            updateVal('val-humidity', data.sensors.humidity, thresholdHumidity);
             document.getElementById('last-update').textContent = data.sensors.timestamp;
         }
         if (data.fan) updateFanUI(data.fan.mode, data.fan.status);
@@ -323,41 +319,6 @@ function updateFanUI(mode, status) {
     if (badge) { badge.className = 'badge ' + (status === 'ON' ? 'badge-green' : 'badge-red'); badge.textContent = status; }
     if (modeBadge) { modeBadge.className = 'badge ' + (mode === 'AUTO' ? 'badge-green' : 'badge-amber'); modeBadge.textContent = mode; }
     if (text) text.textContent = mode === 'AUTO' ? 'Mode AUTO — System controlled' : `Mode MANUAL — Fan ${status}`;
-}
-
-// ============================================
-// THRESHOLD SAVE
-// ============================================
-async function saveThresholds(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btn-save-thresholds');
-    const feedback = document.getElementById('threshold-feedback');
-    btn.disabled = true;
-    btn.textContent = 'Menyimpan...';
-    feedback.style.display = 'none';
-
-    try {
-        const res = await fetch(`/dashboard/device/${DEVICE_ID}/thresholds`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.csrfToken, 'Accept': 'application/json' },
-            body: JSON.stringify({
-                temp_threshold: parseFloat(document.getElementById('threshold-temp').value),
-                amonia_threshold: parseFloat(document.getElementById('threshold-amonia').value),
-                humidity_threshold: parseFloat(document.getElementById('threshold-humidity').value),
-            })
-        });
-        const data = await res.json();
-        feedback.textContent = data.message || 'Berhasil disimpan!';
-        feedback.style.color = data.success ? 'var(--color-accent-green)' : 'var(--color-accent-red)';
-        feedback.style.display = 'block';
-    } catch (e) {
-        feedback.textContent = 'Gagal menyimpan ambang batas.';
-        feedback.style.color = 'var(--color-accent-red)';
-        feedback.style.display = 'block';
-    }
-    btn.disabled = false;
-    btn.textContent = 'Simpan Ambang Batas';
-    setTimeout(() => { feedback.style.display = 'none'; }, 3000);
 }
 
 // ============================================

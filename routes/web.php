@@ -45,10 +45,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/dashboard/profile', [DashboardController::class, 'updateProfile'])->name('profile.update');
     Route::put('/dashboard/password', [DashboardController::class, 'changePassword'])->name('profile.password');
 
-    // Device Detail & Export
+    // Device Detail, Edit, & Export
     Route::get('/dashboard/device/{id}', [DashboardController::class, 'deviceDetail'])->name('device.detail');
+    Route::get('/dashboard/device/{id}/edit', [DashboardController::class, 'editDevice'])->name('device.edit');
+    Route::put('/dashboard/device/{id}', [DashboardController::class, 'updateDevice'])->name('device.update');
     Route::get('/dashboard/device/{id}/export-pdf', [DashboardController::class, 'exportPdf'])->name('device.export-pdf');
-    Route::put('/dashboard/device/{id}/thresholds', [DashboardController::class, 'updateThresholds'])->name('device.thresholds');
 
     // Device self-registration (user flow)
     Route::post('/dashboard/register-device', [DeviceRegistrationController::class, 'register'])->name('device.register');

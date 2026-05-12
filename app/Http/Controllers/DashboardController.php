@@ -111,9 +111,22 @@ class DashboardController extends Controller
     }
 
     /**
-     * Update per-device threshold settings.
+     * Show device edit page.
      */
-    public function updateThresholds(Request $request, $id)
+    public function editDevice($id)
+    {
+        $user = Auth::user();
+        $device = Device::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        return view('dashboard.device-edit', compact('device'));
+    }
+
+    /**
+     * Update device details and thresholds.
+     */
+    public function updateDevice(Request $request, $id)
     {
         $user = Auth::user();
         $device = Device::where('id', $id)
@@ -121,25 +134,22 @@ class DashboardController extends Controller
             ->firstOrFail();
 
         $request->validate([
+            'device_name'        => 'nullable|string|max:255',
+            'label_rak'          => 'nullable|string|max:255',
             'temp_threshold'     => 'required|numeric|min:0|max:100',
             'amonia_threshold'   => 'required|numeric|min:0|max:500',
             'humidity_threshold' => 'required|numeric|min:0|max:100',
         ]);
 
         $device->update([
+            'device_name'        => $request->device_name,
+            'label_rak'          => $request->label_rak,
             'temp_threshold'     => $request->temp_threshold,
             'amonia_threshold'   => $request->amonia_threshold,
             'humidity_threshold' => $request->humidity_threshold,
         ]);
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Ambang batas berhasil diperbarui.',
-            ]);
-        }
-
-        return redirect()->route('device.detail', $id)->with('success', 'Ambang batas berhasil diperbarui.');
+        return redirect()->route('device.detail', $id)->with('success', 'Detail alat dan ambang batas berhasil diperbarui.');
     }
 
     /**
