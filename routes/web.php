@@ -27,6 +27,18 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+
+    // Registration
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
+
+    // Google OAuth
+    Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
+    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+
+    // Complete Profile (for new Google OAuth users)
+    Route::get('/register/complete', [AuthController::class, 'showCompleteProfile'])->name('register.complete');
+    Route::post('/register/complete', [AuthController::class, 'completeProfile']);
 });
 
 // Admin login (separate guard, no conflict)

@@ -61,9 +61,14 @@
             </button>
         </form>
 
-        {{-- Admin Link --}}
+
+        {{-- Register & Admin Links --}}
         <div class="text-center mt-6 pt-6" style="border-top: 1px solid var(--color-border-card);">
-            <a href="{{ route('admin.login') }}" class="text-sm font-medium hover:underline" style="color: var(--color-text-muted);" id="link-admin-login">
+            <p class="text-sm mb-3" style="color: var(--color-text-muted);">
+                Belum punya akun?
+                <a href="{{ route('register') }}" class="font-medium hover:underline" style="color: var(--color-accent-teal);" id="link-register">Daftar di sini</a>
+            </p>
+            <a href="{{ route('admin.login') }}" class="text-xs font-medium hover:underline" style="color: var(--color-text-muted);" id="link-admin-login">
                 Admin Access →
             </a>
         </div>

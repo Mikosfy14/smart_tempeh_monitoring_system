@@ -16,7 +16,7 @@
             </svg>
         </div>
         <h2 class="text-2xl font-bold mb-3">Belum Ada Rak Terdaftar</h2>
-        <p class="text-sm mb-8" style="color: var(--color-text-secondary); max-width: 400px; margin: 0 auto;">
+        <p class="text-sm mb-10 mx-auto" style="color: var(--color-text-secondary); max-width: 400px;">
             Daftarkan rak pertama Anda dengan memasukkan Device ID yang tercetak pada perangkat ESP32.
         </p>
         <button class="btn btn-primary btn-lg" onclick="openModal('register-modal')" id="btn-empty-register">
