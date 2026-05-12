@@ -10,29 +10,29 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 
     /* Background colors */
-    --color-bg-primary: #0a0e1a;
-    --color-bg-secondary: #111827;
-    --color-bg-card: #111827;
-    --color-bg-card-hover: #1e293b;
-    --color-bg-input: #0a0e1a;
+    --color-bg-primary: #F8FAFC;
+    --color-bg-secondary: #F1F5F9;
+    --color-bg-card: #FFFFFF;
+    --color-bg-card-hover: #F8FAFC;
+    --color-bg-input: #FFFFFF;
 
-    /* Border colors */
-    --color-border-card: #1e293b;
-    --color-border-input: #1e293b;
-    --color-border-focus: #2dd4bf;
+    /* Border colors*/
+    --color-border-card: #E2E8F0;
+    --color-border-input: #CBD5E1;
+    --color-border-focus: #0D9488;
 
     /* Accent colors */
-    --color-accent-teal: #2dd4bf;
-    --color-accent-green: #34d399;
-    --color-accent-red: #f87171;
-    --color-accent-amber: #fbbf24;
-    --color-accent-blue: #60a5fa;
-    --color-accent-cyan: #22d3ee;
+    --color-accent-teal: #0D9488;
+    --color-accent-green: #059669;
+    --color-accent-red: #DC2626;
+    --color-accent-amber: #D97706;
+    --color-accent-blue: #2563EB;
+    --color-accent-cyan: #0891B2;
 
     /* Text colors */
-    --color-text-primary: #f1f5f9;
-    --color-text-secondary: #94a3b8;
-    --color-text-muted: #64748b;
+    --color-text-primary: #0F172A;
+    --color-text-secondary: #475569;
+    --color-text-muted: #94A3B8;
 }
 
 /* ============================================
@@ -56,11 +56,13 @@ body {
     border: 1px solid var(--color-border-card);
     border-radius: 1rem;
     padding: 1.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
 }
 
 .card:hover {
     background-color: var(--color-bg-card-hover);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
 }
 
 .card-static {
@@ -68,6 +70,7 @@ body {
     border: 1px solid var(--color-border-card);
     border-radius: 1rem;
     padding: 1.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
 }
 
 /* Metric cards with colored left border */
@@ -174,8 +177,8 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #2dd4bf, #34d399);
-    color: #0a0e1a;
+    background: linear-gradient(135deg, #0D9488, #14B8A6);
+    color: #FFFFFF;
 }
 
 .btn-primary:hover {
@@ -199,13 +202,14 @@ body {
 }
 
 .btn-secondary {
-    background-color: var(--color-bg-card-hover);
-    color: var(--color-text-primary);
+    background-color: var(--color-bg-card); 
+    color: var(--color-text-primary); 
     border: 1px solid var(--color-border-card);
 }
 
 .btn-secondary:hover {
-    background-color: #334155;
+    background-color: #E2E8F0; 
+    color: var(--color-text-primary); 
 }
 
 .btn-sm {
@@ -230,20 +234,27 @@ body {
 }
 
 /* ============================================
-   NAVIGATION
+   NAVIGATION 
    ============================================ */
 
 .nav-bar {
     background-color: var(--color-bg-card);
     border-bottom: 1px solid var(--color-border-card);
-    padding: 0 1.5rem;
+    padding: 0 1rem; /* Padding dikurangi untuk HP */
     height: 4rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.5rem; /* Mencegah elemen saling menempel */
     position: sticky;
     top: 0;
     z-index: 50;
+}
+
+@media (min-width: 768px) {
+    .nav-bar {
+        padding: 0 1.5rem; /* Padding kembali normal di Laptop */
+    }
 }
 
 .nav-logo {
@@ -264,14 +275,30 @@ body {
     background-color: var(--color-bg-card);
     border-right: 1px solid var(--color-border-card);
     width: 16rem;
-    min-height: 100vh;
+    height: 100dvh; /* Mengikuti tinggi asli layar HP, mencegah terpotong */
+    overflow-y: auto; /* Memungkinkan sidebar di-scroll jika menu banyak */
     display: flex;
     flex-direction: column;
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 40;
+    z-index: 60; /* Harus lebih tinggi dari topbar */
     transition: transform 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1); /* Memberi bayangan saat menu HP terbuka */
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .admin-main {
+        margin-left: 0 !important;
+    }
 }
 
 .sidebar-link {
@@ -329,7 +356,7 @@ body {
 .data-table td {
     padding: 0.75rem 1rem;
     font-size: 0.9375rem;
-    border-bottom: 1px solid rgba(30, 41, 59, 0.5);
+    border-bottom: 1px solid var(--color-border-card);
     color: var(--color-text-primary);
 }
 
@@ -392,7 +419,7 @@ body {
     position: relative;
     width: 3.5rem;
     height: 2rem;
-    background-color: #374151;
+    background-color: #CBD5E1; 
     border-radius: 9999px;
     cursor: pointer;
     transition: background-color 0.3s ease;
@@ -429,7 +456,7 @@ body {
     width: 5rem;
     height: 5rem;
     border-radius: 9999px;
-    border: 3px solid #374151;
+    border: 3px solid #CBD5E1; 
     background-color: transparent;
     color: var(--color-text-muted);
     display: flex;
@@ -438,7 +465,6 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
 }
-
 .power-btn:hover {
     border-color: var(--color-text-secondary);
     color: var(--color-text-secondary);
@@ -671,6 +697,75 @@ body {
 
     .metric-value {
         font-size: 2rem;
+    }
+}
+
+/* ============================================
+   RESPONSIVE BUTTONS (MOBILE FIX)
+   ============================================ */
+@media (max-width: 768px) {
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem; /* Mengecilkan teks tombol standar */
+    }
+    .btn-sm {
+        padding: 0.375rem 0.625rem;
+        font-size: 0.75rem; /* Menyesuaikan teks tombol kecil */
+        gap: 0.25rem;
+    }
+    /* Memastikan icon dalam tombol ikut mengecil proporsional */
+    .btn svg, .btn-sm svg {
+        width: 1rem;
+        height: 1rem;
+    }
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES & MOBILE UX
+   ============================================ */
+@media (max-width: 768px) {
+    /* 1. Button Proportions Fix - Menghilangkan kesan tombol "raksasa" */
+    .btn { padding: 0.5rem 0.75rem; font-size: 0.8125rem; }
+    .btn-sm { padding: 0.375rem 0.625rem; font-size: 0.75rem; gap: 0.25rem; }
+    .btn-icon { padding: 0.375rem; }
+    .btn svg, .btn-sm svg, .btn-icon svg { width: 1.125rem; height: 1.125rem; }
+
+/* 2. Sticky Horizontal Table Fix (Advanced Multi-Column) */
+    .data-table th,
+    .data-table td {
+        white-space: nowrap; 
+        padding: 0.625rem 0.75rem; 
+        font-size: 0.8125rem; 
+    }
+    
+    /* --- Tabel Overview (index): Hanya 1 kolom statis --- */
+    .table-overview th:first-child,
+    .table-overview td:first-child {
+        position: sticky; left: 0; background-color: var(--color-bg-card); z-index: 10; border-right: 1px solid var(--color-border-card);
+    }
+
+    /* --- Tabel Data (users, devices): Kolom 1 (#) & Kolom 2 (Nama/ID) statis --- */
+    /* Kita patok lebar kolom nomor (40px) agar kolom kedua bisa nempel tepat di sebelahnya */
+    .table-data th:nth-child(1),
+    .table-data td:nth-child(1) {
+        position: sticky; left: 0; background-color: var(--color-bg-card); z-index: 11; 
+        min-width: 40px; max-width: 40px; text-align: center; padding-left: 0.25rem; padding-right: 0.25rem;
+    }
+    .table-data th:nth-child(2),
+    .table-data td:nth-child(2) {
+        position: sticky; left: 40px; background-color: var(--color-bg-card); z-index: 10; border-right: 1px solid var(--color-border-card);
+    }
+
+    /* --- Tabel Logs (sensor-logs): Kolom 1 (Waktu) & Kolom 2 (Device ID) statis --- */
+    /* Kolom Waktu butuh ruang lebih lebar (sekitar 120px) */
+    .table-logs th:nth-child(1),
+    .table-logs td:nth-child(1) {
+        position: sticky; left: 0; background-color: var(--color-bg-card); z-index: 11; 
+        min-width: 120px; max-width: 120px; 
+    }
+    .table-logs th:nth-child(2),
+    .table-logs td:nth-child(2) {
+        position: sticky; left: 120px; background-color: var(--color-bg-card); z-index: 10; border-right: 1px solid var(--color-border-card);
     }
 }
 

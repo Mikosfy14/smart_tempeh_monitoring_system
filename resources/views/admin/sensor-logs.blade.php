@@ -10,7 +10,9 @@
     <div class="flex items-center justify-between mb-6">
         <p class="text-sm" style="color: var(--color-text-secondary);">Browse and filter all sensor telemetry data</p>
         <button class="btn btn-danger btn-sm" onclick="openModal('purge-modal')" id="btn-purge-logs">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
             Purge > 30 Hari
         </button>
     </div>
@@ -31,9 +33,9 @@
                 <select name="device_id" class="form-input" id="filter-device">
                     <option value="">Semua Device</option>
                     @foreach($devices as $d)
-                        <option value="{{ $d->id }}" {{ request('device_id') == $d->id ? 'selected' : '' }}>
-                            {{ $d->device_id }} {{ $d->label_rak ? '— '.$d->label_rak : '' }}
-                        </option>
+                    <option value="{{ $d->id }}" {{ request('device_id') == $d->id ? 'selected' : '' }}>
+                        {{ $d->device_id }} {{ $d->label_rak ? '— '.$d->label_rak : '' }}
+                    </option>
                     @endforeach
                 </select>
             </div>
@@ -42,15 +44,17 @@
                 <select name="user_id" class="form-input" id="filter-user">
                     <option value="">Semua User</option>
                     @foreach($users as $u)
-                        <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>
-                            {{ $u->name }}
-                        </option>
+                    <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>
+                        {{ $u->name }}
+                    </option>
                     @endforeach
                 </select>
             </div>
             <div class="flex gap-2">
                 <button type="submit" class="btn btn-primary btn-sm flex-1" id="btn-filter">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
                     Filter
                 </button>
                 <a href="{{ route('admin.sensor-logs') }}" class="btn btn-secondary btn-sm" id="btn-reset-filter">Reset</a>
@@ -67,7 +71,7 @@
             </h3>
         </div>
 
-        <table class="data-table" id="sensor-logs-table">
+        <table class="data-table table-logs">
             <thead>
                 <tr>
                     <th>#</th>
@@ -108,25 +112,25 @@
             <div style="display: flex; gap: 4px; align-items: center;">
                 {{-- Previous --}}
                 @if($logs->onFirstPage())
-                    <span class="btn btn-secondary btn-sm" style="opacity: 0.5; pointer-events: none;">← Prev</span>
+                <span class="btn btn-secondary btn-sm" style="opacity: 0.5; pointer-events: none;">← Prev</span>
                 @else
-                    <a href="{{ $logs->previousPageUrl() }}" class="btn btn-secondary btn-sm">← Prev</a>
+                <a href="{{ $logs->previousPageUrl() }}" class="btn btn-secondary btn-sm">← Prev</a>
                 @endif
 
                 {{-- Page Numbers --}}
                 @foreach ($logs->getUrlRange(max(1, $logs->currentPage() - 2), min($logs->lastPage(), $logs->currentPage() + 2)) as $page => $url)
-                    @if ($page == $logs->currentPage())
-                        <span class="btn btn-primary btn-sm">{{ $page }}</span>
-                    @else
-                        <a href="{{ $url }}" class="btn btn-secondary btn-sm">{{ $page }}</a>
-                    @endif
+                @if ($page == $logs->currentPage())
+                <span class="btn btn-primary btn-sm">{{ $page }}</span>
+                @else
+                <a href="{{ $url }}" class="btn btn-secondary btn-sm">{{ $page }}</a>
+                @endif
                 @endforeach
 
                 {{-- Next --}}
                 @if($logs->hasMorePages())
-                    <a href="{{ $logs->nextPageUrl() }}" class="btn btn-secondary btn-sm">Next →</a>
+                <a href="{{ $logs->nextPageUrl() }}" class="btn btn-secondary btn-sm">Next →</a>
                 @else
-                    <span class="btn btn-secondary btn-sm" style="opacity: 0.5; pointer-events: none;">Next →</span>
+                <span class="btn btn-secondary btn-sm" style="opacity: 0.5; pointer-events: none;">Next →</span>
                 @endif
             </div>
         </div>
@@ -138,7 +142,9 @@
 <div class="modal-overlay" id="purge-modal">
     <div class="modal-content text-center">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4" style="background: rgba(248, 113, 113, 0.1);">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" style="color: var(--color-accent-red);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" style="color: var(--color-accent-red);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
         </div>
         <h3 class="text-lg font-bold mb-2">Purge Old Logs</h3>
         <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Hapus semua log sensor yang lebih lama dari <strong class="text-white">30 hari</strong>? Aksi ini tidak bisa di-undo.</p>
@@ -152,34 +158,48 @@
 
 @push('scripts')
 <script>
-function openModal(id) { document.getElementById(id).classList.add('active'); }
-function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-
-async function confirmPurge() {
-    const btn = document.getElementById('btn-confirm-purge');
-    btn.disabled = true;
-    btn.textContent = 'Menghapus...';
-
-    try {
-        const res = await fetch('{{ route("admin.sensor-logs.purge") }}', {
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': window.csrfToken, 'Accept': 'application/json' }
-        });
-        const data = await res.json();
-        closeModal('purge-modal');
-        alert(data.message || 'Berhasil.');
-        location.reload();
-    } catch (err) {
-        alert('Gagal menghapus log.');
-        btn.disabled = false;
-        btn.textContent = 'Hapus Sekarang';
+    function openModal(id) {
+        document.getElementById(id).classList.add('active');
     }
-}
 
-// ============================================
-// FLATPICKR INITIALIZATION
-// ============================================
-flatpickr('#filter-date-from', { allowInput: true, dateFormat: 'Y-m-d' });
-flatpickr('#filter-date-to', { allowInput: true, dateFormat: 'Y-m-d' });
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+    }
+
+    async function confirmPurge() {
+        const btn = document.getElementById('btn-confirm-purge');
+        btn.disabled = true;
+        btn.textContent = 'Menghapus...';
+
+        try {
+            const res = await fetch('{{ route("admin.sensor-logs.purge") }}', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': window.csrfToken,
+                    'Accept': 'application/json'
+                }
+            });
+            const data = await res.json();
+            closeModal('purge-modal');
+            alert(data.message || 'Berhasil.');
+            location.reload();
+        } catch (err) {
+            alert('Gagal menghapus log.');
+            btn.disabled = false;
+            btn.textContent = 'Hapus Sekarang';
+        }
+    }
+
+    // ============================================
+    // FLATPICKR INITIALIZATION
+    // ============================================
+    flatpickr('#filter-date-from', {
+        allowInput: true,
+        dateFormat: 'Y-m-d'
+    });
+    flatpickr('#filter-date-to', {
+        allowInput: true,
+        dateFormat: 'Y-m-d'
+    });
 </script>
 @endpush

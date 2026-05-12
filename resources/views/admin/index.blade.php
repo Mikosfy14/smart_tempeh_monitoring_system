@@ -59,32 +59,32 @@
         </div>
 
         @if($recentUsers->count() > 0)
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>WhatsApp</th>
-                    <th>Devices</th>
-                    <th>Registered</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($recentUsers as $user)
-                <tr>
-                    <td class="font-medium">{{ $user->name }}</td>
-                    <td style="color: var(--color-text-secondary);">{{ $user->email }}</td>
-                    <td style="color: var(--color-accent-teal);">{{ $user->whatsapp_number ?? '—' }}</td>
-                    <td><span class="badge badge-blue">{{ $user->devices_count }}</span></td>
-                    <td style="color: var(--color-text-secondary);">{{ $user->created_at->format('d M Y') }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+        <div class="overflow-x-auto">
+            <table class="data-table table-overview">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>WhatsApp</th>
+                        <th>Devices</th>
+                        <th>Registered</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($recentUsers as $user)
+                    <tr>
+                        <td class="font-medium">{{ $user->name }}</td>
+                        <td style="color: var(--color-text-secondary);">{{ $user->email }}</td>
+                        <td style="color: var(--color-accent-teal);">{{ $user->whatsapp_number ?? '—' }}</td>
+                        <td><span class="badge badge-blue">{{ $user->devices_count }}</span></td>
+                        <td style="color: var(--color-text-secondary);">{{ $user->created_at->format('d M Y') }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
         @else
         <p class="text-center py-8" style="color: var(--color-text-muted);">No users registered yet.</p>
         @endif
     </div>
-
-</div>
-@endsection
+    @endsection

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,6 +19,7 @@
 
     @vite(['resources/css/app.css'])
 </head>
+
 <body class="min-h-screen">
 
     {{-- Sidebar --}}
@@ -78,8 +80,8 @@
     </aside>
 
     {{-- Mobile Hamburger --}}
-    <button class="fixed top-4 left-4 z-50 btn-icon md:hidden" id="sidebar-toggle" onclick="document.getElementById('admin-sidebar').classList.toggle('open')">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <button class="fixed top-3 left-4 z-[70] btn-icon md:hidden bg-white shadow-sm border" style="border-color: var(--color-border-card);" id="sidebar-toggle" onclick="document.getElementById('admin-sidebar').classList.toggle('open')">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
     </button>
@@ -87,30 +89,30 @@
     {{-- Main Content Area --}}
     <div class="admin-main" style="margin-left: 16rem;">
         {{-- Top bar --}}
-        <div class="border-b px-8 py-5 flex items-center justify-between" style="border-color: var(--color-border-card);">
-            <h1 class="text-xl font-bold">@yield('page-title', 'Dashboard')</h1>
-            <div class="text-sm" style="color: var(--color-text-secondary);">
-                Logged in as <strong class="text-white">{{ session('admin_username', 'Admin') }}</strong>
+        <div class="border-b px-4 md:px-8 py-4 md:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0" style="border-color: var(--color-border-card);">
+            <h1 class="text-lg md:text-xl font-bold pl-12 md:pl-0">@yield('page-title', 'Dashboard')</h1>
+            <div class="text-xs md:text-sm pl-12 md:pl-0 sm:pl-0" style="color: var(--color-text-secondary);">
+                Logged in as <strong style="color: var(--color-text-primary);">{{ session('admin_username', 'Admin') }}</strong>
             </div>
         </div>
 
         {{-- Flash Messages --}}
         @if(session('error'))
-            <div id="flash-error" class="alert alert-error mx-8 mt-4 animate-fade-in-up">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {{ session('error') }}
-            </div>
+        <div id="flash-error" class="alert alert-error mx-8 mt-4 animate-fade-in-up">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ session('error') }}
+        </div>
         @endif
 
         @if(session('success'))
-            <div id="flash-success" class="alert alert-success mx-8 mt-4 animate-fade-in-up">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                {{ session('success') }}
-            </div>
+        <div id="flash-success" class="alert alert-success mx-8 mt-4 animate-fade-in-up">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            {{ session('success') }}
+        </div>
         @endif
 
         {{-- Page Content --}}
@@ -139,4 +141,5 @@
 
     @stack('scripts')
 </body>
+
 </html>
