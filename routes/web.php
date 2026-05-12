@@ -56,6 +56,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/profile', [DashboardController::class, 'editProfile'])->name('profile.edit');
     Route::put('/dashboard/profile', [DashboardController::class, 'updateProfile'])->name('profile.update');
     Route::put('/dashboard/password', [DashboardController::class, 'changePassword'])->name('profile.password');
+    Route::get('/dashboard/profile/link-google', [DashboardController::class, 'linkGoogle'])->name('profile.link-google');
 
     // Device Detail, Edit, & Export
     Route::get('/dashboard/device/{id}', [DashboardController::class, 'deviceDetail'])->name('device.detail');
@@ -71,6 +72,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/dashboard/live', [DashboardController::class, 'liveData'])->name('dashboard.live');
     Route::get('/api/dashboard/chart', [DashboardController::class, 'chartData'])->name('dashboard.chart');
     Route::post('/api/device/control', [DashboardController::class, 'controlFan'])->name('dashboard.control');
+
+    // Link Google Account
+    Route::get('/dashboard/profile/link-google', [DashboardController::class, 'linkGoogle'])->name('profile.link-google');
+    Route::post('/dashboard/profile/unlink-google', [DashboardController::class, 'unlinkGoogle'])->name('profile.unlink-google');
 
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

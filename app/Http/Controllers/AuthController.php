@@ -108,44 +108,94 @@ class AuthController extends Controller
     /**
      * Redirect the user to Google's OAuth page.
      */
+    /**
+     * Redirect the user to Google's OAuth page.
+     */
     public function redirectToGoogle()
     {
+        // Jika user sudah login, otomatis tandai ini sebagai proses TAUTAN (Linking)
+        if (Auth::check()) {
+            session(['linking_google' => true]);
+        }
+
         return Socialite::driver('google')->redirect();
     }
 
     /**
      * Handle the callback from Google.
      *
+     * - If logged in (Linking): Validate email uniqueness, update google_id.
      * - Existing user → login immediately.
      * - New user → store OAuth data in session, redirect to complete-profile form.
      */
-    public function handleGoogleCallback()
+    /**
+     * Handle the callback from Google.
+     */
+    public function handleGoogleCallback(Request $request)
     {
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (\Exception $e) {
-            return redirect()->route('login')->withErrors([
-                'email' => 'Gagal login dengan Google. Silakan coba lagi.',
-            ]);
+            $errorMsg = 'Gagal terhubung dengan Google. Silakan coba lagi.';
+            return Auth::check()
+                ? redirect()->route('profile.edit')->withErrors(['google' => $errorMsg])
+                : redirect()->route('login')->withErrors(['email' => $errorMsg]);
         }
 
-        // Try to find an existing user by google_id or email
+        // ==========================================
+        // 1. LINKING ACCOUNT (User is already logged in)
+        // ==========================================
+        if (Auth::check() && $request->session()->pull('linking_google')) {
+            $currentUser = Auth::user();
+
+            $googleEmail = $googleUser->getEmail();
+            $googleId = $googleUser->getId();
+
+            // Cek apakah email Google sudah dipakai akun lain
+            $existingUserWithEmail = User::where('email', $googleEmail)
+                ->where('id', '!=', $currentUser->id)
+                ->first();
+
+            // Cek apakah Google ID sudah dipakai akun lain
+            $existingUserWithGoogleId = User::where('google_id', $googleId)
+                ->where('id', '!=', $currentUser->id)
+                ->first();
+
+            if ($existingUserWithEmail || $existingUserWithGoogleId) {
+                return redirect()->route('profile.edit')->withErrors([
+                    'google' => 'Gagal menautkan! Akun Google atau Email tersebut sudah terhubung dengan pengguna lain di sistem.'
+                ]);
+            }
+
+            // Sinkronisasi otomatis: Perbarui google_id DAN sinkronkan email ke email Google
+            User::where('id', $currentUser->id)->update([
+                'email'     => $googleEmail,
+                'google_id' => $googleId,
+            ]);
+
+            return redirect()->route('profile.edit')->with('success', 'Akun Google berhasil ditautkan dan Email telah disinkronisasi!');
+        }
+
+        // ==========================================
+        // 2. NORMAL LOGIN / REGISTRATION
+        // ==========================================
+
+        // Cari user berdasarkan google_id atau email
         $user = User::where('google_id', $googleUser->getId())
-                     ->orWhere('email', $googleUser->getEmail())
-                     ->first();
+            ->orWhere('email', $googleUser->getEmail())
+            ->first();
 
         if ($user) {
-            // Existing user — update google_id if it was not set yet
+            // Update google_id jika user lama baru pertama kali login via Google
             if (!$user->google_id) {
                 $user->update(['google_id' => $googleUser->getId()]);
             }
 
             Auth::login($user, true);
-
             return redirect()->intended(route('dashboard'));
         }
 
-        // New user — store OAuth data in session and redirect to complete profile
+        // User Baru — simpan data ke session dan arahkan ke form lengkapi profil
         session([
             'oauth_data' => [
                 'name'      => $googleUser->getName(),

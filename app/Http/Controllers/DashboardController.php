@@ -86,6 +86,39 @@ class DashboardController extends Controller
         return redirect()->route('profile.edit')->with('success', 'Password berhasil diubah.');
     }
 
+
+
+    /**
+     * Inisialisasi proses tautan akun Google.
+     */
+    public function linkGoogle()
+    {
+        // Beri tanda ke session bahwa ini adalah proses tautan akun, bukan login biasa
+        session(['linking_google' => true]);
+
+        return \Laravel\Socialite\Facades\Socialite::driver('google')->redirect();
+    }
+
+    /**
+     * Memutuskan koneksi akun Google dari profil saat ini.
+     */
+    public function unlinkGoogle()
+    {
+        $user = Auth::user();
+
+        // Lockout Prevention: Pastikan pengguna sudah memiliki password manual
+        if (empty($user->password)) {
+            return redirect()->route('profile.edit')->withErrors([
+                'google' => 'Anda belum mengatur password manual! Silakan atur password terlebih dahulu sebelum memutuskan koneksi Google untuk menghindari kehilangan akses ke akun Anda.'
+            ]);
+        }
+
+        // Hapus google_id
+        $user->update(['google_id' => null]);
+
+        return redirect()->route('profile.edit')->with('success', 'Koneksi akun Google berhasil diputus.');
+    }
+
     // ============================================
     // DEVICE DETAIL & CHARTS
     // ============================================
