@@ -97,7 +97,7 @@ class WhatsAppService
         $message = "⚠️ *ALAT OFFLINE / KEHILANGAN SINYAL*\n\n"
             . "Rak: *{$label}*\n"
             . "Device ID: {$device->device_id}\n\n"
-            . "Alat tidak mengirim data selama lebih dari 5 menit.\n"
+            . ":information_source: Alat tidak mengirim data selama lebih dari 5 menit.\n"
             . "Periksa koneksi internet dan sumber daya alat Anda.\n\n"
             . "Waktu terdeteksi: {$timestamp}";
 
@@ -119,7 +119,7 @@ class WhatsAppService
         $message = "✅ *ALAT KEMBALI ONLINE*\n\n"
             . "Rak: *{$label}*\n"
             . "Device ID: {$device->device_id}\n\n"
-            . "Alat telah berhasil terhubung kembali dan mulai mengirim data sensor.\n\n"
+            . ":information_source: Alat telah berhasil terhubung kembali dan mulai mengirim data sensor.\n\n"
             . "Waktu: {$timestamp}";
 
         return $this->sendMessage($user->whatsapp_number, $message);
@@ -137,21 +137,21 @@ class WhatsAppService
                 . "Rak: *{$label}*\n"
                 . "Device ID: {$deviceId}\n"
                 . "Suhu Internal: *{$value}°C*\n\n"
-                . "🔄 Kipas pendingin telah *DINYALAKAN OTOMATIS*.\n"
+                . ":information_source: Kipas pendingin telah *DINYALAKAN OTOMATIS*.\n"
                 . "Waktu: {$timestamp}",
 
             'amonia' => "⚠️ *PERINGATAN GAS AMONIA TINGGI*\n\n"
                 . "Rak: *{$label}*\n"
                 . "Device ID: {$deviceId}\n"
                 . "Level Amonia: *{$value} ppm*\n\n"
-                . "⚡ Segera periksa kondisi fermentasi tempe Anda.\n"
+                . ":information_source: Segera periksa kondisi fermentasi tempe Anda.\n" 
                 . "Waktu: {$timestamp}",
 
             'humidity' => "⚠️ *PERINGATAN KELEMBAPAN TINGGI*\n\n"
                 . "Rak: *{$label}*\n"
                 . "Device ID: {$deviceId}\n"
                 . "Kelembapan: *{$value}%*\n\n"
-                . "💧 Kelembapan melebihi ambang batas. Periksa ventilasi.\n"
+                . ":information_source: Kelembapan melebihi ambang batas. Periksa ventilasi.\n"
                 . "Waktu: {$timestamp}",
 
             default => "⚠️ *PERINGATAN SENSOR*\n\n"
@@ -186,7 +186,7 @@ class WhatsAppService
             . "Rak: *{$label}*\n"
             . "Device ID: {$deviceId}\n"
             . "{$typeLabel} saat ini: *{$valueDisplay}*\n\n"
-            . "Kondisi sudah kembali dalam batas aman.\n"
+            . ":information_source: Kondisi sudah kembali dalam batas aman.\n"
             . "Waktu: {$timestamp}";
     }
 
