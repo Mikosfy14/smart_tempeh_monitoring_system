@@ -83,6 +83,49 @@ class WhatsAppService
     }
 
     /**
+     * Send an offline alert when a device stops sending data.
+     */
+    public function sendOfflineAlert(User $user, Device $device): bool
+    {
+        if (!$user->whatsapp_number) {
+            return false;
+        }
+
+        $label = $device->label_rak ?? $device->device_name ?? $device->device_id;
+        $timestamp = now()->format('d M Y H:i:s');
+
+        $message = "⚠️ *ALAT OFFLINE / KEHILANGAN SINYAL*\n\n"
+            . "Rak: *{$label}*\n"
+            . "Device ID: {$device->device_id}\n\n"
+            . "Alat tidak mengirim data selama lebih dari 5 menit.\n"
+            . "Periksa koneksi internet dan sumber daya alat Anda.\n\n"
+            . "Waktu terdeteksi: {$timestamp}";
+
+        return $this->sendMessage($user->whatsapp_number, $message);
+    }
+
+    /**
+     * Send an online recovery notification when a device comes back online.
+     */
+    public function sendOnlineRecovery(User $user, Device $device): bool
+    {
+        if (!$user->whatsapp_number) {
+            return false;
+        }
+
+        $label = $device->label_rak ?? $device->device_name ?? $device->device_id;
+        $timestamp = now()->format('d M Y H:i:s');
+
+        $message = "✅ *ALAT KEMBALI ONLINE*\n\n"
+            . "Rak: *{$label}*\n"
+            . "Device ID: {$device->device_id}\n\n"
+            . "Alat telah berhasil terhubung kembali dan mulai mengirim data sensor.\n\n"
+            . "Waktu: {$timestamp}";
+
+        return $this->sendMessage($user->whatsapp_number, $message);
+    }
+
+    /**
      * Build alert message based on type.
      */
     protected function buildAlertMessage(string $type, string $label, string $deviceId, float $value): string
