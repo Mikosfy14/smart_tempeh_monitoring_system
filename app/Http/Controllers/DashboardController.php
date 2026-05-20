@@ -253,6 +253,8 @@ class DashboardController extends Controller
                 'status' => $device->fan_status,
                 'mode'   => $device->operation_mode,
             ],
+            'is_online'     => $device->is_online,
+            'sensor_status' => $device->sensor_status,
         ]);
     }
 

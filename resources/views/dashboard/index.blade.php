@@ -43,7 +43,7 @@
                     <p class="text-xs mt-1" style="color: var(--color-text-muted);">ID: {{ $device->device_id }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="status-dot {{ $log ? 'status-dot--online' : 'status-dot--offline' }}"></span>
+                    <span class="badge {{ $device->is_online ? 'badge-green' : 'badge-red' }}" style="font-size: 0.6rem; padding: 2px 6px;" data-online-badge>{{ $device->is_online ? 'Online' : 'Offline' }}</span>
                     <button class="btn-icon" style="color: var(--color-text-muted);" onclick="unregisterDevice({{ $device->id }}, '{{ $device->label_rak ?? $device->device_id }}')" title="Lepas alat">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -52,22 +52,34 @@
                 </div>
             </div>
 
-            {{-- Sensor Readings Grid (2x2) --}}
+            @php $cardSensorStatus = $device->sensor_status; @endphp
             <div class="grid grid-cols-2 gap-3 mb-4">
                 <div class="sensor-mini-card" style="border-left: 3px solid var(--color-accent-red);">
-                    <span class="text-xs" style="color: var(--color-text-muted);">Suhu Internal</span>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs" style="color: var(--color-text-muted);">Suhu Internal</span>
+                        <span class="sensor-status-dot {{ $cardSensorStatus['ds18b20'] === 'ok' ? 'sensor-status--ok' : 'sensor-status--error' }}" data-sensor-status="ds18b20"></span>
+                    </div>
                     <span class="text-lg font-bold" style="color: var(--color-accent-red);" data-sensor="internal_temp">{{ $log ? number_format($log->internal_temp, 1).'°C' : '--' }}</span>
                 </div>
                 <div class="sensor-mini-card" style="border-left: 3px solid var(--color-accent-amber);">
-                    <span class="text-xs" style="color: var(--color-text-muted);">Amonia</span>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs" style="color: var(--color-text-muted);">Amonia</span>
+                        <span class="sensor-status-dot {{ $cardSensorStatus['mq135'] === 'ok' ? 'sensor-status--ok' : 'sensor-status--error' }}" data-sensor-status="mq135"></span>
+                    </div>
                     <span class="text-lg font-bold" style="color: var(--color-accent-amber);" data-sensor="amonia_level">{{ $log ? number_format($log->amonia_level, 1).' ppm' : '--' }}</span>
                 </div>
                 <div class="sensor-mini-card" style="border-left: 3px solid var(--color-accent-blue);">
-                    <span class="text-xs" style="color: var(--color-text-muted);">Suhu Ruang</span>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs" style="color: var(--color-text-muted);">Suhu Ruang</span>
+                        <span class="sensor-status-dot {{ $cardSensorStatus['dht22'] === 'ok' ? 'sensor-status--ok' : 'sensor-status--error' }}" data-sensor-status="dht22"></span>
+                    </div>
                     <span class="text-lg font-bold" style="color: var(--color-accent-blue);" data-sensor="room_temp">{{ $log ? number_format($log->room_temp, 1).'°C' : '--' }}</span>
                 </div>
                 <div class="sensor-mini-card" style="border-left: 3px solid var(--color-accent-cyan);">
-                    <span class="text-xs" style="color: var(--color-text-muted);">Kelembapan</span>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs" style="color: var(--color-text-muted);">Kelembapan</span>
+                        <span class="sensor-status-dot {{ $cardSensorStatus['dht22'] === 'ok' ? 'sensor-status--ok' : 'sensor-status--error' }}" data-sensor-status="dht22-hum"></span>
+                    </div>
                     <span class="text-lg font-bold" style="color: var(--color-accent-cyan);" data-sensor="humidity">{{ $log ? number_format($log->humidity, 1).'%' : '--' }}</span>
                 </div>
             </div>
@@ -165,6 +177,7 @@
                 if (data.fan) {
                     updateCardFan(card, deviceId, data.fan.mode, data.fan.status);
                 }
+                updateCardStatus(card, data);
             } catch (e) {
                 /* silent fail */ }
         }
@@ -187,6 +200,30 @@
             card.classList.add('animate-pulse-critical');
         } else {
             card.classList.remove('animate-pulse-critical');
+        }
+    }
+
+    function updateCardStatus(card, data) {
+        // Update online/offline badge
+        if (data.is_online !== undefined) {
+            const onlineBadge = card.querySelector('[data-online-badge]');
+            if (onlineBadge) {
+                onlineBadge.textContent = data.is_online ? 'Online' : 'Offline';
+                onlineBadge.className = 'badge ' + (data.is_online ? 'badge-green' : 'badge-red');
+                onlineBadge.style.cssText = 'font-size: 0.6rem; padding: 2px 6px;';
+            }
+        }
+
+        // Update per-sensor status dots
+        if (data.sensor_status) {
+            const updateDot = (attr, status) => {
+                const dot = card.querySelector(`[data-sensor-status="${attr}"]`);
+                if (dot) dot.className = 'sensor-status-dot ' + (status === 'ok' ? 'sensor-status--ok' : 'sensor-status--error');
+            };
+            updateDot('ds18b20', data.sensor_status.ds18b20);
+            updateDot('mq135', data.sensor_status.mq135);
+            updateDot('dht22', data.sensor_status.dht22);
+            updateDot('dht22-hum', data.sensor_status.dht22);
         }
     }
 

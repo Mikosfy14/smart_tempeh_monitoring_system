@@ -17,32 +17,44 @@
         </div>
         <div class="flex items-center gap-2 md:absolute md:right-0 self-start md:self-center">
             <span class="badge {{ $device->operation_mode === 'AUTO' ? 'badge-green' : 'badge-amber' }}" id="device-mode-badge">{{ $device->operation_mode }}</span>
-            <span class="status-dot {{ $device->latestLog ? 'status-dot--online' : 'status-dot--offline' }}"></span>
+            <span class="badge {{ $device->is_online ? 'badge-green' : 'badge-red' }}" id="device-online-badge">{{ $device->is_online ? 'Online' : 'Offline' }}</span>
         </div>
     </div>
 
     {{-- =============================== --}}
     {{-- SENSOR CARDS ROW --}}
     {{-- =============================== --}}
-    @php $log = $device->latestLog; @endphp
+    @php $log = $device->latestLog; $sensorStatus = $device->sensor_status; @endphp
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="card-static sensor-mini-card" style="border-left: 3px solid var(--color-accent-red);" id="card-internal-temp">
-            <span class="text-xs" style="color: var(--color-text-muted);">Suhu Internal</span>
+            <div class="flex items-center justify-between">
+                <span class="text-xs" style="color: var(--color-text-muted);">Suhu Internal</span>
+                <span class="sensor-status-dot {{ $sensorStatus['ds18b20'] === 'ok' ? 'sensor-status--ok' : 'sensor-status--error' }}" id="status-ds18b20" title="DS18B20"></span>
+            </div>
             <span class="text-2xl font-bold" style="color: var(--color-accent-red);" id="val-internal-temp">{{ $log ? number_format($log->internal_temp, 1) : '--' }}</span>
             <span class="text-xs" style="color: var(--color-text-muted);">°C</span>
         </div>
         <div class="card-static sensor-mini-card" style="border-left: 3px solid var(--color-accent-amber);" id="card-amonia">
-            <span class="text-xs" style="color: var(--color-text-muted);">Amonia</span>
+            <div class="flex items-center justify-between">
+                <span class="text-xs" style="color: var(--color-text-muted);">Amonia</span>
+                <span class="sensor-status-dot {{ $sensorStatus['mq135'] === 'ok' ? 'sensor-status--ok' : 'sensor-status--error' }}" id="status-mq135" title="MQ-135"></span>
+            </div>
             <span class="text-2xl font-bold" style="color: var(--color-accent-amber);" id="val-amonia">{{ $log ? number_format($log->amonia_level, 1) : '--' }}</span>
             <span class="text-xs" style="color: var(--color-text-muted);">ppm</span>
         </div>
         <div class="card-static sensor-mini-card" style="border-left: 3px solid var(--color-accent-blue);" id="card-room-temp">
-            <span class="text-xs" style="color: var(--color-text-muted);">Suhu Ruang</span>
+            <div class="flex items-center justify-between">
+                <span class="text-xs" style="color: var(--color-text-muted);">Suhu Ruang</span>
+                <span class="sensor-status-dot {{ $sensorStatus['dht22'] === 'ok' ? 'sensor-status--ok' : 'sensor-status--error' }}" id="status-dht22-temp" title="DHT22"></span>
+            </div>
             <span class="text-2xl font-bold" style="color: var(--color-accent-blue);" id="val-room-temp">{{ $log ? number_format($log->room_temp, 1) : '--' }}</span>
             <span class="text-xs" style="color: var(--color-text-muted);">°C</span>
         </div>
         <div class="card-static sensor-mini-card" style="border-left: 3px solid var(--color-accent-cyan);" id="card-humidity">
-            <span class="text-xs" style="color: var(--color-text-muted);">Kelembapan</span>
+            <div class="flex items-center justify-between">
+                <span class="text-xs" style="color: var(--color-text-muted);">Kelembapan</span>
+                <span class="sensor-status-dot {{ $sensorStatus['dht22'] === 'ok' ? 'sensor-status--ok' : 'sensor-status--error' }}" id="status-dht22-hum" title="DHT22"></span>
+            </div>
             <span class="text-2xl font-bold" style="color: var(--color-accent-cyan);" id="val-humidity">{{ $log ? number_format($log->humidity, 1) : '--' }}</span>
             <span class="text-xs" style="color: var(--color-text-muted);">%</span>
         </div>
@@ -54,7 +66,7 @@
         {{-- CHART SECTION (2/3 width) --}}
         {{-- =============================== --}}
         <div class="lg:col-span-2 card-static" style="position: relative;">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center justify-between mb-2">
                 <h2 class="text-base font-bold">Grafik Sensor</h2>
                 <div class="flex items-center gap-1">
                     <button class="chart-range-btn" data-range="1h">1h</button>
@@ -62,6 +74,22 @@
                     <button class="chart-range-btn" data-range="24h">24h</button>
                     <button class="chart-range-btn" data-range="7d">7d</button>
                 </div>
+            </div>
+
+            {{-- Chart Filter Toggles --}}
+            <div class="flex flex-wrap items-center gap-2 mb-4">
+                <button class="chart-filter-btn active" data-index="0" style="--filter-color: #f87171;">
+                    <span class="chart-filter-dot"></span> Suhu Internal
+                </button>
+                <button class="chart-filter-btn active" data-index="1" style="--filter-color: #fbbf24;">
+                    <span class="chart-filter-dot"></span> Gas Amonia
+                </button>
+                <button class="chart-filter-btn active" data-index="2" style="--filter-color: #60a5fa;">
+                    <span class="chart-filter-dot"></span> Suhu Rak
+                </button>
+                <button class="chart-filter-btn active" data-index="3" style="--filter-color: #22d3ee;">
+                    <span class="chart-filter-dot"></span> Kelembapan
+                </button>
             </div>
 
             {{-- Loading Overlay --}}
@@ -83,6 +111,41 @@
         {{-- SIDE PANEL (1/3 width) --}}
         {{-- =============================== --}}
         <div class="flex flex-col gap-6">
+
+            {{-- Status Komponen --}}
+            <div class="card-static">
+                <h3 class="text-sm font-bold mb-4">Status Komponen</h3>
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" style="color: var(--color-accent-red);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                            <span class="text-xs font-medium">DS18B20</span>
+                        </div>
+                        <span class="badge {{ $sensorStatus['ds18b20'] === 'ok' ? 'badge-green' : 'badge-red' }}" id="comp-ds18b20">{{ $sensorStatus['ds18b20'] === 'ok' ? 'OK' : 'Error' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" style="color: var(--color-accent-blue);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+                            <span class="text-xs font-medium">DHT22</span>
+                        </div>
+                        <span class="badge {{ $sensorStatus['dht22'] === 'ok' ? 'badge-green' : 'badge-red' }}" id="comp-dht22">{{ $sensorStatus['dht22'] === 'ok' ? 'OK' : 'Error' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" style="color: var(--color-accent-amber);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                            <span class="text-xs font-medium">MQ-135</span>
+                        </div>
+                        <span class="badge {{ $sensorStatus['mq135'] === 'ok' ? 'badge-green' : 'badge-red' }}" id="comp-mq135">{{ $sensorStatus['mq135'] === 'ok' ? 'OK' : 'Error' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" style="color: var(--color-accent-cyan);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            <span class="text-xs font-medium">Relay (Kipas)</span>
+                        </div>
+                        <span class="badge {{ $device->fan_status === 'ON' ? 'badge-green' : 'badge-muted' }}" id="comp-relay">{{ $device->fan_status }}</span>
+                    </div>
+                </div>
+            </div>
 
             {{-- Fan Control --}}
             <div class="card-static">
@@ -147,6 +210,61 @@
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* Chart Filter Toggles */
+.chart-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border-card);
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.7rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.45;
+}
+.chart-filter-btn.active {
+    opacity: 1;
+    border-color: var(--filter-color);
+    color: var(--color-text-primary);
+}
+.chart-filter-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--filter-color);
+}
+.chart-filter-btn:not(.active) .chart-filter-dot {
+    opacity: 0.3;
+}
+
+/* Sensor Status Dots */
+.sensor-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.sensor-status--ok {
+    background: var(--color-accent-green);
+    box-shadow: 0 0 4px rgba(52, 211, 153, 0.5);
+}
+.sensor-status--error {
+    background: var(--color-accent-red);
+    box-shadow: 0 0 4px rgba(248, 113, 113, 0.5);
+}
+
+/* Badge Muted (for relay OFF state) */
+.badge-muted {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+}
 </style>
 @endsection
 
@@ -209,6 +327,19 @@ document.querySelectorAll('.chart-range-btn').forEach(btn => {
 });
 
 // ============================================
+// CHART FILTER TOGGLES
+// ============================================
+document.querySelectorAll('.chart-filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        this.classList.toggle('active');
+        const index = parseInt(this.dataset.index);
+        const dataset = sensorChart.data.datasets[index];
+        dataset.hidden = !this.classList.contains('active');
+        sensorChart.update();
+    });
+});
+
+// ============================================
 // LOADING STATE HELPERS
 // ============================================
 function showChartLoading() {
@@ -244,7 +375,46 @@ async function pollSensorData() {
             document.getElementById('last-update').textContent = data.sensors.timestamp;
         }
         if (data.fan) updateFanUI(data.fan.mode, data.fan.status);
+
+        // Update online/offline badge
+        if (data.is_online !== undefined) {
+            const onlineBadge = document.getElementById('device-online-badge');
+            if (onlineBadge) {
+                onlineBadge.textContent = data.is_online ? 'Online' : 'Offline';
+                onlineBadge.className = 'badge ' + (data.is_online ? 'badge-green' : 'badge-red');
+            }
+        }
+
+        // Update sensor status badges
+        if (data.sensor_status) {
+            updateSensorStatusDot('status-ds18b20', data.sensor_status.ds18b20);
+            updateSensorStatusDot('status-mq135', data.sensor_status.mq135);
+            updateSensorStatusDot('status-dht22-temp', data.sensor_status.dht22);
+            updateSensorStatusDot('status-dht22-hum', data.sensor_status.dht22);
+            updateComponentBadge('comp-ds18b20', data.sensor_status.ds18b20);
+            updateComponentBadge('comp-dht22', data.sensor_status.dht22);
+            updateComponentBadge('comp-mq135', data.sensor_status.mq135);
+            // Relay badge
+            const relayBadge = document.getElementById('comp-relay');
+            if (relayBadge) {
+                relayBadge.textContent = data.sensor_status.relay;
+                relayBadge.className = 'badge ' + (data.sensor_status.relay === 'ON' ? 'badge-green' : 'badge-muted');
+            }
+        }
     } catch (e) { console.error('Poll error:', e); }
+}
+
+function updateSensorStatusDot(id, status) {
+    const dot = document.getElementById(id);
+    if (!dot) return;
+    dot.className = 'sensor-status-dot ' + (status === 'ok' ? 'sensor-status--ok' : 'sensor-status--error');
+}
+
+function updateComponentBadge(id, status) {
+    const badge = document.getElementById(id);
+    if (!badge) return;
+    badge.textContent = status === 'ok' ? 'OK' : 'Error';
+    badge.className = 'badge ' + (status === 'ok' ? 'badge-green' : 'badge-red');
 }
 
 function updateVal(id, value, threshold) {
