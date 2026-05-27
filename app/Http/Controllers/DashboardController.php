@@ -140,7 +140,13 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'asc')
             ->get(['internal_temp', 'amonia_level', 'room_temp', 'humidity', 'created_at']);
 
-        return view('dashboard.device-detail', compact('device', 'chartData'));
+        // Initial table data (last 20 logs, newest first)
+        $tableData = SensorLog::where('device_id', $device->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get(['internal_temp', 'amonia_level', 'room_temp', 'humidity', 'created_at']);
+
+        return view('dashboard.device-detail', compact('device', 'chartData', 'tableData'));
     }
 
     /**
@@ -248,6 +254,8 @@ class DashboardController extends Controller
                 'room_temp'     => $latestLog->room_temp,
                 'humidity'      => $latestLog->humidity,
                 'timestamp'     => $latestLog->created_at->format('H:i:s'),
+                'full_timestamp' => $latestLog->created_at->format('d M Y H:i:s'),
+                'log_id'        => $latestLog->id,
             ] : null,
             'fan' => [
                 'status' => $device->fan_status,

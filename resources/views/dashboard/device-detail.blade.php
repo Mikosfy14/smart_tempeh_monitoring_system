@@ -204,6 +204,74 @@
         </div>
     </div>
 
+    {{-- =============================== --}}
+    {{-- HISTORICAL DATA TABLE --}}
+    {{-- =============================== --}}
+    <div class="card-static mt-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <h2 class="text-base font-bold">Data Historis Sensor</h2>
+                <span class="badge badge-muted" id="table-row-count">{{ $tableData->count() }} data</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="sensor-status-dot sensor-status--ok" id="table-live-dot" style="animation: pulse-glow 2s ease-in-out infinite;"></span>
+                <span class="text-xs" style="color: var(--color-text-muted);">Live</span>
+            </div>
+        </div>
+
+        <div class="history-table-wrapper" id="history-table-wrapper">
+            <table class="history-table" id="history-table">
+                <thead>
+                    <tr>
+                        <th>Waktu</th>
+                        <th>Suhu Internal</th>
+                        <th>Suhu Rak</th>
+                        <th>Kelembapan</th>
+                        <th>Gas Amonia</th>
+                        <th>Kipas</th>
+                    </tr>
+                </thead>
+                <tbody id="history-tbody">
+                    @foreach($tableData as $row)
+                    <tr>
+                        <td>
+                            <span class="text-xs font-medium">{{ $row->created_at->format('d M Y') }}</span><br>
+                            <span class="text-xs" style="color: var(--color-text-muted);">{{ $row->created_at->format('H:i:s') }}</span>
+                        </td>
+                        <td>
+                            <span style="color: var(--color-accent-red); font-weight: 600;">{{ number_format($row->internal_temp, 1) }}°C</span>
+                        </td>
+                        <td>
+                            <span style="color: var(--color-accent-blue); font-weight: 600;">{{ number_format($row->room_temp, 1) }}°C</span>
+                        </td>
+                        <td>
+                            <span style="color: var(--color-accent-cyan); font-weight: 600;">{{ number_format($row->humidity, 1) }}%</span>
+                        </td>
+                        <td>
+                            <span style="color: var(--color-accent-amber); font-weight: 600;">{{ number_format($row->amonia_level, 1) }} ppm</span>
+                        </td>
+                        <td>
+                            <span class="badge {{ $device->fan_status === 'ON' ? 'badge-green' : 'badge-muted' }}">{{ $device->fan_status }}</span>
+                        </td>
+                    </tr>
+                    @endforeach
+
+                    @if($tableData->count() === 0)
+                    <tr id="empty-table-row">
+                        <td colspan="6" class="text-center" style="padding: 2rem; color: var(--color-text-muted);">
+                            Belum ada data sensor yang tercatat.
+                        </td>
+                    </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
+
+        <p class="text-xs mt-3" style="color: var(--color-text-muted);">
+            Menampilkan maksimal 20 data terbaru. Data diperbarui secara otomatis setiap 5 detik.
+        </p>
+    </div>
+
 </div>
 
 <style>
@@ -265,16 +333,99 @@
     background: rgba(148, 163, 184, 0.15);
     color: #94a3b8;
 }
+
+/* Historical Data Table */
+.history-table-wrapper {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--color-border-card);
+    max-height: 520px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-card) transparent;
+}
+.history-table-wrapper::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.history-table-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+.history-table-wrapper::-webkit-scrollbar-thumb {
+    background: var(--color-border-card);
+    border-radius: 3px;
+}
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+.history-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+.history-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    background: var(--color-bg-card);
+    border-bottom: 1px solid var(--color-border-card);
+    white-space: nowrap;
+}
+.history-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+    white-space: nowrap;
+    vertical-align: middle;
+}
+.history-table tbody tr {
+    transition: background 0.2s ease;
+}
+.history-table tbody tr:hover {
+    background: rgba(148, 163, 184, 0.04);
+}
+
+/* New row animation */
+@keyframes table-row-flash {
+    0% {
+        background: rgba(45, 212, 191, 0.15);
+    }
+    100% {
+        background: transparent;
+    }
+}
+.history-table tbody tr.new-row {
+    animation: table-row-flash 1.5s ease-out;
+}
+
+/* Live pulse dot */
+@keyframes pulse-glow {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 4px rgba(52, 211, 153, 0.5);
+    }
+    50% {
+        opacity: 0.4;
+        box-shadow: 0 0 8px rgba(52, 211, 153, 0.8);
+    }
+}
 </style>
 @endsection
 
 @push('scripts')
 <script>
 const DEVICE_ID = {{ $device->id }};
+const MAX_TABLE_ROWS = 20;
 let currentRange = '6h';
 let sensorChart = null;
 let currentMode = '{{ $device->operation_mode }}';
 let currentFanStatus = '{{ $device->fan_status }}';
+let lastLogId = {{ $device->latestLog ? $device->latestLog->id : 0 }};
 
 // ============================================
 // CHART INITIALIZATION
@@ -373,6 +524,12 @@ async function pollSensorData() {
             updateVal('val-room-temp', data.sensors.room_temp, null);
             updateVal('val-humidity', data.sensors.humidity, thresholdHumidity);
             document.getElementById('last-update').textContent = data.sensors.timestamp;
+
+            // Add new row to table if this is a genuinely new log
+            if (data.sensors.log_id && data.sensors.log_id !== lastLogId) {
+                lastLogId = data.sensors.log_id;
+                addTableRow(data.sensors, data.fan ? data.fan.status : currentFanStatus);
+            }
         }
         if (data.fan) updateFanUI(data.fan.mode, data.fan.status);
 
@@ -496,5 +653,70 @@ function updateFanUI(mode, status) {
 // ============================================
 flatpickr('#pdf-date-from', { allowInput: true, dateFormat: 'Y-m-d' });
 flatpickr('#pdf-date-to', { allowInput: true, dateFormat: 'Y-m-d' });
+
+// ============================================
+// HISTORICAL DATA TABLE
+// ============================================
+function addTableRow(sensors, fanStatus) {
+    const tbody = document.getElementById('history-tbody');
+    if (!tbody) return;
+
+    // Remove empty state row if present
+    const emptyRow = document.getElementById('empty-table-row');
+    if (emptyRow) emptyRow.remove();
+
+    const tr = document.createElement('tr');
+    tr.classList.add('new-row');
+
+    const ts = sensors.full_timestamp || sensors.timestamp || '--';
+    const tsParts = ts.split(' ');
+    let datePart = '', timePart = '';
+    if (tsParts.length >= 4) {
+        datePart = tsParts.slice(0, 3).join(' ');
+        timePart = tsParts[3];
+    } else {
+        timePart = ts;
+    }
+
+    const fmt = (v, dec = 1) => v !== null && v !== undefined ? parseFloat(v).toFixed(dec) : '--';
+    const fanClass = fanStatus === 'ON' ? 'badge-green' : 'badge-muted';
+
+    tr.innerHTML = `
+        <td>
+            <span class="text-xs font-medium">${datePart}</span><br>
+            <span class="text-xs" style="color: var(--color-text-muted);">${timePart}</span>
+        </td>
+        <td>
+            <span style="color: var(--color-accent-red); font-weight: 600;">${fmt(sensors.internal_temp)}°C</span>
+        </td>
+        <td>
+            <span style="color: var(--color-accent-blue); font-weight: 600;">${fmt(sensors.room_temp)}°C</span>
+        </td>
+        <td>
+            <span style="color: var(--color-accent-cyan); font-weight: 600;">${fmt(sensors.humidity)}%</span>
+        </td>
+        <td>
+            <span style="color: var(--color-accent-amber); font-weight: 600;">${fmt(sensors.amonia_level)} ppm</span>
+        </td>
+        <td>
+            <span class="badge ${fanClass}">${fanStatus}</span>
+        </td>
+    `;
+
+    // Prepend to top of tbody
+    tbody.insertBefore(tr, tbody.firstChild);
+
+    // Remove flash animation after it plays
+    setTimeout(() => tr.classList.remove('new-row'), 1500);
+
+    // Enforce max rows
+    while (tbody.children.length > MAX_TABLE_ROWS) {
+        tbody.removeChild(tbody.lastChild);
+    }
+
+    // Update row counter
+    const counter = document.getElementById('table-row-count');
+    if (counter) counter.textContent = Math.min(tbody.children.length, MAX_TABLE_ROWS) + ' data';
+}
 </script>
 @endpush
