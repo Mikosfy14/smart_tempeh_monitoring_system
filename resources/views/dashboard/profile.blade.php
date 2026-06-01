@@ -169,19 +169,52 @@
 
             <div class="mb-4">
                 <label class="form-label">Password Lama</label>
-                <input type="password" name="old_password" class="form-input" required placeholder="Masukkan password saat ini" id="old-password">
+                <div class="relative">
+                    <input type="password" name="old_password" class="form-input form-input-has-toggle" required placeholder="Masukkan password saat ini" id="old-password">
+                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('old-password', this)" tabindex="-1" aria-label="Tampilkan password">
+                        <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <svg class="eye-closed hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.024 10.024 0 014.13-5.246M8.82 8.82L4.7 4.7M9.88 9.88a3 3 0 104.24 4.24m2.07-2.07a9.962 9.962 0 012.33 3.95M21 12a9.964 9.964 0 00-3.21-6.88M3 3l18 18" />
+                        </svg>
+                    </button>
+                </div>
                 @error('old_password') <span class="text-xs" style="color: var(--color-accent-red);">{{ $message }}</span> @enderror
             </div>
 
             <div class="mb-4">
                 <label class="form-label">Password Baru</label>
-                <input type="password" name="new_password" class="form-input" required placeholder="Minimal 6 karakter" id="new-password">
+                <div class="relative">
+                    <input type="password" name="new_password" class="form-input form-input-has-toggle" required placeholder="Minimal 6 karakter" id="new-password">
+                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('new-password', this)" tabindex="-1" aria-label="Tampilkan password">
+                        <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <svg class="eye-closed hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.024 10.024 0 014.13-5.246M8.82 8.82L4.7 4.7M9.88 9.88a3 3 0 104.24 4.24m2.07-2.07a9.962 9.962 0 012.33 3.95M21 12a9.964 9.964 0 00-3.21-6.88M3 3l18 18" />
+                        </svg>
+                    </button>
+                </div>
                 @error('new_password') <span class="text-xs" style="color: var(--color-accent-red);">{{ $message }}</span> @enderror
             </div>
 
             <div class="mb-6">
                 <label class="form-label">Konfirmasi Password Baru</label>
-                <input type="password" name="new_password_confirmation" class="form-input" required placeholder="Ketik ulang password baru" id="new-password-confirm">
+                <div class="relative">
+                    <input type="password" name="new_password_confirmation" class="form-input form-input-has-toggle" required placeholder="Ketik ulang password baru" id="new-password-confirm">
+                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('new-password-confirm', this)" tabindex="-1" aria-label="Tampilkan password">
+                        <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <svg class="eye-closed hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.024 10.024 0 014.13-5.246M8.82 8.82L4.7 4.7M9.88 9.88a3 3 0 104.24 4.24m2.07-2.07a9.962 9.962 0 012.33 3.95M21 12a9.964 9.964 0 00-3.21-6.88M3 3l18 18" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <button type="submit" class="btn btn-danger" id="btn-change-password">
@@ -195,3 +228,25 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function togglePasswordVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        
+        const eyeOpen = btn.querySelector('.eye-open');
+        const eyeClosed = btn.querySelector('.eye-closed');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            eyeOpen.classList.add('hidden');
+            eyeClosed.classList.remove('hidden');
+        } else {
+            input.type = 'password';
+            eyeOpen.classList.remove('hidden');
+            eyeClosed.classList.add('hidden');
+        }
+    }
+</script>
+@endpush

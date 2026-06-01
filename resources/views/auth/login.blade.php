@@ -48,7 +48,16 @@
                     <svg class="form-input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                    <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+                    <input type="password" id="password" name="password" class="form-input form-input-has-toggle" placeholder="••••••••" required>
+                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('password', this)" tabindex="-1" aria-label="Tampilkan password">
+                        <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <svg class="eye-closed hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.024 10.024 0 014.13-5.246M8.82 8.82L4.7 4.7M9.88 9.88a3 3 0 104.24 4.24m2.07-2.07a9.962 9.962 0 012.33 3.95M21 12a9.964 9.964 0 00-3.21-6.88M3 3l18 18" />
+                        </svg>
+                    </button>
                 </div>
             </div>
 
@@ -81,16 +90,35 @@
             Log in via Google
         </a>
 
-        {{-- Register & Admin Links --}}
+        {{-- Register Link --}}
         <div class="text-center mt-6 pt-6" style="border-top: 1px solid var(--color-border-card);">
-            <p class="text-sm mb-3" style="color: var(--color-text-muted);">
+            <p class="text-sm" style="color: var(--color-text-muted);">
                 Belum punya akun?
                 <a href="{{ route('register') }}" class="font-medium hover:underline" style="color: var(--color-accent-teal);" id="link-register">Daftar di sini</a>
             </p>
-            <a href="{{ route('admin.login') }}" class="text-xs font-medium hover:underline" style="color: var(--color-text-muted);" id="link-admin-login">
-                Admin Access →
-            </a>
         </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function togglePasswordVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        
+        const eyeOpen = btn.querySelector('.eye-open');
+        const eyeClosed = btn.querySelector('.eye-closed');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            eyeOpen.classList.add('hidden');
+            eyeClosed.classList.remove('hidden');
+        } else {
+            input.type = 'password';
+            eyeOpen.classList.remove('hidden');
+            eyeClosed.classList.add('hidden');
+        }
+    }
+</script>
+@endpush

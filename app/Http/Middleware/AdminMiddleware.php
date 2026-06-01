@@ -12,11 +12,14 @@ class AdminMiddleware
     /**
      * Handle an incoming request.
      * Ensures the user is authenticated via the admin guard.
+     *
+     * Instead of redirecting to a login page (which reveals its existence),
+     * we abort with 404 to make the admin panel invisible to unauthorized users.
      */
     public function handle(Request $request, Closure $next): Response
     {
         if (!Auth::guard('admin')->check()) {
-            return redirect()->route('admin.login');
+            abort(404);
         }
 
         return $next($request);
