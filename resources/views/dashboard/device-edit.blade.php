@@ -79,13 +79,45 @@
             <p class="text-xs mb-4" style="color: var(--color-text-secondary);">
                 Melepas alat akan menghilangkannya dari dashboard Anda, namun data riwayat tidak akan terhapus dari sistem.
             </p>
-            <form action="{{ route('device.unregister') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin melepas perangkat ini dari akun Anda?');">
+            <form id="form-unregister-device" action="{{ route('device.unregister') }}" method="POST">
                 @csrf
                 <input type="hidden" name="device_id" value="{{ $device->id }}">
-                <button type="submit" class="btn btn-danger">Lepas Perangkat</button>
+                <button type="button" class="btn btn-danger" onclick="confirmUnregisterDevice()">Lepas Perangkat</button>
             </form>
         </div>
     </div>
 
 </div>
+
+@push('scripts')
+<script>
+    function confirmUnregisterDevice() {
+        if (typeof Swal === 'undefined') {
+            if (confirm('Apakah Anda yakin ingin melepas perangkat ini dari akun Anda?')) {
+                document.getElementById('form-unregister-device').submit();
+            }
+            return;
+        }
+
+        Swal.fire({
+            title: 'Lepas Perangkat?',
+            html: 'Apakah Anda yakin ingin melepas perangkat ini dari akun Anda?<br><br>Perangkat akan dihilangkan dari dashboard, namun data riwayat tidak akan terhapus.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Lepas',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#334155',
+            background: 'var(--color-bg-card, #1e293b)',
+            color: 'var(--color-text-primary, #f1f5f9)',
+            reverseButtons: true,
+            focusCancel: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('form-unregister-device').submit();
+            }
+        });
+    }
+</script>
+@endpush
 @endsection

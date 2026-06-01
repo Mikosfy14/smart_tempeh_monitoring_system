@@ -64,8 +64,8 @@ class FermentationBatchController extends Controller
             abort(403);
         }
 
-        // Hanya batch yang masih aktif / semangit yang bisa diakhiri
-        if (!in_array($batch->status, ['active', 'semangit'])) {
+        // Hanya batch yang masih aktif / semangit / gagal yang bisa diakhiri
+        if (!in_array($batch->status, ['active', 'semangit', 'failed'])) {
             return redirect()
                 ->route('device.detail', $device->id)
                 ->with('error', 'Sesi produksi ini sudah tidak aktif.');

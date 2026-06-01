@@ -98,17 +98,13 @@
                 <form action="{{ route('batch.end', [$device, $activeBatch]) }}" method="POST" id="form-end-batch">
                     @csrf
                     <button type="button" class="btn btn-batch-end w-full" id="btn-end-batch"
-                            onclick="confirmEndBatch()">
+                            onclick="confirmEndBatch('active')">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
                         </svg>
                         Akhiri Produksi
                     </button>
                 </form>
-
-                <div class="text-center mt-3">
-                    <a href="{{ route('batch.history', $device) }}" class="text-xs hover:underline" style="color: var(--color-text-muted);">Lihat Semua Riwayat Batch ➔</a>
-                </div>
 
             </div>
 
@@ -159,21 +155,18 @@
                     </div>
                 @endif
 
-                {{-- Tombol mulai batch baru --}}
-                <form action="{{ route('batch.start', $device) }}" method="POST" id="form-start-batch">
+                {{-- Tombol Tutup Peringatan & Bersihkan (untuk batch yang gagal) --}}
+                <form action="{{ route('batch.end', [$device, $latestBatch]) }}" method="POST" id="form-end-batch-failed">
                     @csrf
-                    <button type="submit" class="btn btn-batch-start w-full" id="btn-start-batch">
+                    <button type="button" class="btn w-full font-semibold" id="btn-end-batch-failed"
+                            onclick="confirmEndBatch('failed')"
+                            style="background-color: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35);">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
-                        Mulai Produksi Baru
+                        Konfirmasi Kegagalan
                     </button>
                 </form>
-
-                <div class="text-center mt-3">
-                    <a href="{{ route('batch.history', $device) }}" class="text-xs hover:underline" style="color: var(--color-text-muted);">Lihat Semua Riwayat Batch ➔</a>
-                </div>
 
             </div>
 
@@ -202,13 +195,19 @@
                         Mulai Produksi Baru
                     </button>
                 </form>
-
-                <div class="text-center mt-3">
-                    <a href="{{ route('batch.history', $device) }}" class="text-xs hover:underline" style="color: var(--color-text-muted);">Lihat Semua Riwayat Batch ➔</a>
-                </div>
             </div>
 
         @endif
+
+        {{-- Common Footer Action: Lihat Semua Riwayat Batch --}}
+        <div class="mt-4 pt-4" style="border-top: 1px solid var(--color-border-card);">
+            <a href="{{ route('batch.history', $device) }}" class="btn btn-secondary w-full justify-center text-xs font-semibold gap-2" id="btn-batch-history" style="padding: 10px 16px;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Lihat Semua Riwayat Batch
+            </a>
+        </div>
 
     </div>
     {{-- / END CARD BATCH --}}
@@ -1046,40 +1045,76 @@ flatpickr('#pdf-date-to', { allowInput: true, dateFormat: 'Y-m-d' });
 // ============================================
 // BATCH: Confirm End Production (SweetAlert2)
 // ============================================
-function confirmEndBatch() {
-    // Fallback to native confirm if SweetAlert2 not loaded
-    if (typeof Swal === 'undefined') {
-        if (confirm('Akhiri produksi ini?\n\nBatch akan ditandai selesai dan data fermentasi akan disimpan.')) {
-            document.getElementById('form-end-batch').submit();
+function confirmEndBatch(status = 'active') {
+    if (status === 'failed') {
+        const msg = 'Konfirmasi bahwa Anda telah mengecek alat yang gagal ini? Peringatan akan dihapus dari layar.';
+        if (typeof Swal === 'undefined') {
+            if (confirm(msg)) {
+                document.getElementById('form-end-batch-failed').submit();
+            }
+            return;
         }
-        return;
-    }
 
-    Swal.fire({
-        title: 'Akhiri Sesi Produksi?',
-        html: 'Batch ini akan ditandai <strong>selesai</strong> dan waktu selesai akan dicatat.<br><br>Tindakan ini <u>tidak dapat dibatalkan</u>.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: '✓ Ya, Akhiri Produksi',
-        cancelButtonText: 'Batal',
-        confirmButtonColor: '#dc2626',
-        cancelButtonColor: '#334155',
-        background: 'var(--color-bg-card, #1e293b)',
-        color: 'var(--color-text-primary, #f1f5f9)',
-        reverseButtons: true,
-        focusCancel: true,
-        customClass: {
-            popup:         'swal-batch-popup',
-            confirmButton: 'swal-batch-confirm',
-            cancelButton:  'swal-batch-cancel',
+        Swal.fire({
+            title: 'Tutup Peringatan?',
+            html: 'Konfirmasi bahwa Anda telah mengecek alat yang gagal ini?<br><br>Peringatan akan dihapus dari layar.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Bersihkan',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#0D9488',
+            cancelButtonColor: '#334155',
+            background: 'var(--color-bg-card, #1e293b)',
+            color: 'var(--color-text-primary, #f1f5f9)',
+            reverseButtons: true,
+            focusCancel: true,
+            customClass: {
+                popup:         'swal-batch-popup',
+                confirmButton: 'swal-batch-confirm',
+                cancelButton:  'swal-batch-cancel',
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const btn = document.getElementById('btn-end-batch-failed');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:0.7">Membersihkan...</span>'; }
+                document.getElementById('form-end-batch-failed').submit();
+            }
+        });
+    } else {
+        // Fallback to native confirm if SweetAlert2 not loaded
+        if (typeof Swal === 'undefined') {
+            if (confirm('Akhiri produksi ini?\n\nBatch akan ditandai selesai dan data fermentasi akan disimpan.')) {
+                document.getElementById('form-end-batch').submit();
+            }
+            return;
         }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const btn = document.getElementById('btn-end-batch');
-            if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:0.7">Mengakhiri...</span>'; }
-            document.getElementById('form-end-batch').submit();
-        }
-    });
+
+        Swal.fire({
+            title: 'Akhiri Sesi Produksi?',
+            html: 'Batch ini akan ditandai <strong>selesai</strong> dan waktu selesai akan dicatat.<br><br>Tindakan ini <u>tidak dapat dibatalkan</u>.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '✓ Ya, Akhiri Produksi',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#0D9488',
+            cancelButtonColor: '#334155',
+            background: 'var(--color-bg-card, #1e293b)',
+            color: 'var(--color-text-primary, #f1f5f9)',
+            reverseButtons: true,
+            focusCancel: true,
+            customClass: {
+                popup:         'swal-batch-popup',
+                confirmButton: 'swal-batch-confirm',
+                cancelButton:  'swal-batch-cancel',
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const btn = document.getElementById('btn-end-batch');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:0.7">Mengakhiri...</span>'; }
+                document.getElementById('form-end-batch').submit();
+            }
+        });
+    }
 }
 
 // ============================================
