@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\MasterDeviceController;
 use App\Http\Controllers\Admin\SensorLogController;
+use App\Http\Controllers\Admin\AdminManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,9 +42,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/register/complete', [AuthController::class, 'completeProfile']);
 });
 
-// Admin login (separate guard, no conflict)
-Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
-Route::post('/admin/login', [AdminAuthController::class, 'login']);
+// Admin login (hidden, non-obvious URL — only admins should know this)
+Route::get('/stm-internal/gateway', [AdminAuthController::class, 'showLogin'])->name('admin.login');
+Route::post('/stm-internal/gateway', [AdminAuthController::class, 'login']);
 
 // ============================================
 // Authenticated User Routes
@@ -82,11 +83,11 @@ Route::middleware('auth')->group(function () {
 });
 
 // ============================================
-// Admin Routes (protected by admin middleware)
+// Admin Routes (protected by admin middleware — hidden URL prefix)
 // ============================================
-Route::middleware(\App\Http\Middleware\AdminMiddleware::class)->prefix('admin')->group(function () {
+Route::middleware('admin')->prefix('stm-internal')->group(function () {
     // Admin Dashboard / Overview
-    Route::get('/', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/panel', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
     // User Management
     Route::get('/users', [UserController::class, 'index'])->name('admin.users');
@@ -104,6 +105,12 @@ Route::middleware(\App\Http\Middleware\AdminMiddleware::class)->prefix('admin')-
     // Sensor Logs Management
     Route::get('/sensor-logs', [SensorLogController::class, 'index'])->name('admin.sensor-logs');
     Route::delete('/sensor-logs/purge', [SensorLogController::class, 'purgeOldLogs'])->name('admin.sensor-logs.purge');
+
+    // Admin Management (Master Admin only — controller enforces is_master check)
+    Route::get('/admins', [AdminManagementController::class, 'index'])->name('admin.admins');
+    Route::post('/admins', [AdminManagementController::class, 'store'])->name('admin.admins.store');
+    Route::put('/admins/{admin}', [AdminManagementController::class, 'update'])->name('admin.admins.update');
+    Route::delete('/admins/{admin}', [AdminManagementController::class, 'destroy'])->name('admin.admins.destroy');
 
     // Admin Logout
     Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');

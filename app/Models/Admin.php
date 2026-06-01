@@ -8,7 +8,7 @@ class Admin extends Authenticatable
 {
     protected $guard = 'admin';
 
-    protected $fillable = ['username', 'password'];
+    protected $fillable = ['username', 'password', 'is_master'];
 
     protected $hidden = ['password'];
 
@@ -16,6 +16,7 @@ class Admin extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'is_master' => 'boolean',
         ];
     }
 }

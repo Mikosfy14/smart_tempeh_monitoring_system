@@ -63,6 +63,18 @@
                 </svg>
                 Sensor Logs
             </a>
+
+            @if(auth('admin')->user() && auth('admin')->user()->is_master)
+            <div class="mt-2 pt-2 border-t" style="border-color: var(--color-border-card);">
+                <span class="block px-4 py-1 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted);">Master</span>
+            </div>
+            <a href="{{ route('admin.admins') }}" class="sidebar-link {{ request()->routeIs('admin.admins') ? 'active' : '' }}" id="nav-admin-management">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Manajemen Admin
+            </a>
+            @endif
         </nav>
 
         {{-- Logout --}}
