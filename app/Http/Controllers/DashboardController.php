@@ -20,7 +20,7 @@ class DashboardController extends Controller
 
         // Load all devices with their latest sensor reading
         $devices = $user->devices()
-            ->with('latestLog')
+            ->with(['latestLog', 'activeBatch'])
             ->orderBy('created_at', 'asc')
             ->get();
 
@@ -131,8 +131,19 @@ class DashboardController extends Controller
         $user = Auth::user();
         $device = Device::where('id', $id)
             ->where('user_id', $user->id)
-            ->with('latestLog')
+            ->with(['latestLog', 'activeBatch', 'latestBatch'])
             ->firstOrFail();
+
+        // Double-guarantee: load eksplisit setelah eager-load
+        // untuk memastikan relasi ofMany() ter-resolve dengan benar.
+        $device->load(['activeBatch', 'latestBatch']);
+
+        // activeBatch: batch dengan status 'active' atau 'semangit' (sedang berjalan)
+        $activeBatch = $device->activeBatch;
+
+        // latestBatch: batch terakhir TANPA filter status (termasuk 'failed', 'completed')
+        // Digunakan untuk menampilkan state "Gagal" di UI jika batch terakhir adalah failed.
+        $latestBatch = $device->latestBatch;
 
         // Initial chart data (last 6 hours)
         $chartData = SensorLog::where('device_id', $device->id)
@@ -146,8 +157,11 @@ class DashboardController extends Controller
             ->limit(20)
             ->get(['internal_temp', 'amonia_level', 'room_temp', 'humidity', 'created_at']);
 
-        return view('dashboard.device-detail', compact('device', 'chartData', 'tableData'));
+        return view('dashboard.device-detail', compact(
+            'device', 'chartData', 'tableData', 'activeBatch', 'latestBatch'
+        ));
     }
+
 
     /**
      * Show device edit page.

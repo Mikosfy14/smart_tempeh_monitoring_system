@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Device;
+use App\Models\FermentationBatch;
 use App\Models\SensorLog;
+use App\Services\FermentationPredictionService;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -11,10 +13,12 @@ use Illuminate\Support\Facades\Log;
 class ApiController extends Controller
 {
     protected WhatsAppService $whatsApp;
+    protected FermentationPredictionService $predictor;
 
-    public function __construct(WhatsAppService $whatsApp)
+    public function __construct(WhatsAppService $whatsApp, FermentationPredictionService $predictor)
     {
-        $this->whatsApp = $whatsApp;
+        $this->whatsApp  = $whatsApp;
+        $this->predictor = $predictor;
     }
 
     /**
@@ -32,7 +36,12 @@ class ApiController extends Controller
         ]);
 
         // Find the device by its hardware ID
-        $device = Device::where('device_id', $request->device_id)->first();
+        // Eager-load 'user' saja. activeBatch TIDAK di-eager-load di sini
+        // karena ofMany() + closure tidak reliable di context API request.
+        // Gunakan direct query di bawah untuk memastikan batch selalu ditemukan.
+        $device = Device::where('device_id', $request->device_id)
+            ->with('user')
+            ->first();
 
         if (!$device) {
             return response()->json([
@@ -41,14 +50,53 @@ class ApiController extends Controller
             ], 404);
         }
 
-        // Store sensor log
-        SensorLog::create([
+        // ================================================
+        // BATCH INTEGRATION — Direct query (bukan eager-load)
+        // ================================================
+        // Direct query jauh lebih reliable daripada ofMany() eager-load
+        // untuk memastikan batch_id selalu ter-bind ke setiap sensor log.
+        $activeBatch = FermentationBatch::where('device_id', $device->id)
+            ->whereIn('status', ['active', 'semangit'])
+            ->orderByDesc('start_time')
+            ->first();
+
+        // Simpan sensor log, sertakan batch_id jika ada batch yang sedang berjalan
+        $newLog = SensorLog::create([
             'device_id'     => $device->id,
+            'batch_id'      => $activeBatch?->id, // null jika tidak ada batch aktif
             'internal_temp' => $request->internal_temp,
             'amonia_level'  => $request->amonia_level,
             'room_temp'     => $request->room_temp,
             'humidity'      => $request->humidity,
         ]);
+
+        Log::info('ApiController: Sensor log disimpan', [
+            'device_id'   => $device->id,
+            'batch_id'    => $activeBatch?->id ?? 'null (tidak ada batch aktif)',
+            'amonia'      => $request->amonia_level,
+            'temp'        => $request->internal_temp,
+        ]);
+
+        // ================================================
+        // PREDICTIVE ANALYSIS — Jalankan expert system
+        // ================================================
+        // Analisis HANYA jika ada batch yang sedang aktif/semangit.
+        // Service ini akan mengevaluasi Rules, mengubah status batch jika perlu,
+        // dan mengirim notifikasi WA (dengan perlindungan anti-spam via Cache).
+        if ($activeBatch) {
+            try {
+                $this->predictor->analyze($activeBatch, $newLog);
+                // Refresh batch untuk mendapatkan status terbaru setelah analisis
+                $activeBatch->refresh();
+            } catch (\Exception $e) {
+                // Jangan biarkan error analisis menghentikan respons ke ESP32
+                Log::error('BatchPredictor: Exception saat analisis', [
+                    'batch_id' => $activeBatch->id,
+                    'error'    => $e->getMessage(),
+                    'trace'    => $e->getTraceAsString(),
+                ]);
+            }
+        }
 
         // ================================================
         // THRESHOLD CHECKS — Dynamic per-device thresholds
@@ -114,8 +162,8 @@ class ApiController extends Controller
 
         // ================================================
         // Consistent JSON response for ESP32
-        // Always includes fan_status, operation_mode, and thresholds
-        // so the ESP32 can sync its local logic.
+        // Always includes fan_status, operation_mode, thresholds,
+        // and batch info so ESP32 can sync its local logic.
         // ================================================
         return response()->json([
             'status'           => 'success',
@@ -128,6 +176,11 @@ class ApiController extends Controller
                 'amonia'   => $amoniaThreshold,
                 'humidity' => $humidityThreshold,
             ],
+            // Info batch untuk keperluan debug / monitoring ESP32
+            'batch'            => $activeBatch ? [
+                'id'     => $activeBatch->id,
+                'status' => $activeBatch->status, // Status terbaru setelah analisis prediktif
+            ] : null,
             'server_time'      => now()->format('Y-m-d H:i:s'),
         ]);
     }

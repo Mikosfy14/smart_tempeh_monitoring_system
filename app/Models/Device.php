@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Device extends Model
 {
@@ -62,6 +63,47 @@ class Device extends Model
     {
         return $this->belongsTo(MasterDevice::class, 'device_id', 'device_id');
     }
+
+    /**
+     * Dapatkan semua batch fermentasi yang dimiliki device ini.
+     */
+    public function batches(): HasMany
+    {
+        return $this->hasMany(FermentationBatch::class);
+    }
+
+    /**
+     * Dapatkan batch fermentasi yang sedang aktif atau dalam kondisi semangit.
+     *
+     * Catatan implementasi:
+     * Kombinasi whereIn() + latestOfMany() tidak kompatibel dengan eager loading
+     * di Laravel karena latestOfMany() menghasilkan subquery ofMany() yang
+     * mengabaikan constraint whereIn() saat di-eager-load.
+     *
+     * Solusi: gunakan ofMany() dengan closure untuk filter status sekaligus
+     * memilih baris dengan start_time terbesar — bekerja sempurna dengan with().
+     */
+    public function activeBatch(): HasOne
+    {
+        return $this->hasOne(FermentationBatch::class)->ofMany(
+            ['start_time' => 'max'],
+            fn ($query) => $query->whereIn('status', ['active', 'semangit'])
+        );
+    }
+
+    /**
+     * Dapatkan batch fermentasi terakhir milik device ini, tanpa filter status.
+     *
+     * Berbeda dengan activeBatch() yang hanya return status 'active'/'semangit',
+     * relasi ini return batch apapun termasuk 'failed' dan 'completed'.
+     * Digunakan di UI untuk menampilkan state "Gagal" ketika batch terakhir
+     * berstatus 'failed', bukan langsung reset ke "Mulai Produksi Baru".
+     */
+    public function latestBatch(): HasOne
+    {
+        return $this->hasOne(FermentationBatch::class)->latestOfMany('start_time');
+    }
+
 
     /**
      * Check if the device is online (has sent data within the last 5 minutes).

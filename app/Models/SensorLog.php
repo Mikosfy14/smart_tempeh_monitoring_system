@@ -9,6 +9,7 @@ class SensorLog extends Model
 {
     protected $fillable = [
         'device_id',
+        'batch_id',
         'internal_temp',
         'amonia_level',
         'room_temp',
@@ -31,5 +32,13 @@ class SensorLog extends Model
     public function device(): BelongsTo
     {
         return $this->belongsTo(Device::class);
+    }
+
+    /**
+     * Get the fermentation batch this log belongs to.
+     */
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(FermentationBatch::class);
     }
 }

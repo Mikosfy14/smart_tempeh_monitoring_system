@@ -21,6 +21,186 @@
         </div>
     </div>
 
+    {{-- ============================================================= --}}
+    {{-- CARD: STATUS PRODUKSI (BATCH)                                  --}}
+    {{-- Posisi: tepat di bawah header, di atas grid sensor             --}}
+    {{-- Tiga state: active/semangit | failed | idle                   --}}
+    {{-- ============================================================= --}}
+    <div class="card-static batch-status-card mb-6" id="card-batch-status"
+        @if($activeBatch && $activeBatch->status === 'semangit') style="border-color: rgba(251,191,36,0.3);"
+        @elseif($latestBatch && $latestBatch->status === 'failed') style="border-color: rgba(239,68,68,0.35);"
+        @endif>
+
+        {{-- ── Header card ── --}}
+        <div class="flex items-center gap-3 mb-4">
+            <div class="batch-icon-wrap"
+                @if($activeBatch && $activeBatch->status === 'semangit') style="background: rgba(251,191,36,0.15); color: #fbbf24;"
+                @elseif($latestBatch && $latestBatch->status === 'failed') style="background: rgba(239,68,68,0.15); color: #ef4444;"
+                @endif>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold">Status Produksi (Batch)</h3>
+                <p class="text-xs" style="color: var(--color-text-muted);">Manajemen sesi fermentasi aktif</p>
+            </div>
+        </div>
+
+        @if($activeBatch)
+            {{-- ─────────────────────────────────────────────────── --}}
+            {{-- STATE A: Batch SEDANG BERJALAN (active / semangit) --}}
+            {{-- ─────────────────────────────────────────────────── --}}
+            <div class="batch-active-state">
+
+                {{-- Baris 1: Badge status + durasi berjalan --}}
+                <div class="flex flex-wrap items-center gap-3 mb-4">
+                    @if($activeBatch->status === 'semangit')
+                        <span class="badge badge-warning-glow" id="batch-status-badge">
+                            <span class="batch-pulse-dot batch-pulse-dot--warning"></span>
+                            Semangit
+                        </span>
+                    @else
+                        <span class="badge badge-active-glow" id="batch-status-badge">
+                            <span class="batch-pulse-dot batch-pulse-dot--active"></span>
+                            Aktif
+                        </span>
+                    @endif
+
+                    <span class="text-xs px-2 py-1 rounded-md" style="background: rgba(148,163,184,0.1); color: var(--color-text-muted);">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 inline -mt-0.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Berjalan selama <strong>{{ number_format($activeBatch->duration_hours, 1) }} jam</strong>
+                    </span>
+                </div>
+
+                {{-- Baris 2: Grid info — waktu mulai & ID batch --}}
+                <div class="grid grid-cols-2 gap-3 mb-5">
+                    <div class="batch-info-cell">
+                        <span class="batch-info-label">Waktu Mulai</span>
+                        <span class="batch-info-value">{{ $activeBatch->start_time->format('d M Y') }}</span>
+                        <span class="batch-info-sub">{{ $activeBatch->start_time->format('H:i:s') }}</span>
+                    </div>
+                    <div class="batch-info-cell">
+                        <span class="batch-info-label">ID Batch</span>
+                        <span class="batch-info-value">#{{ str_pad($activeBatch->id, 4, '0', STR_PAD_LEFT) }}</span>
+                        <span class="batch-info-sub">{{ $activeBatch->start_time->diffForHumans() }}</span>
+                    </div>
+                </div>
+
+                {{-- Catatan prediksi (jika ada) --}}
+                @if($activeBatch->prediction_notes)
+                    <div class="mb-4 p-3 rounded-lg text-xs" style="background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); color: var(--color-text-secondary); white-space: pre-line;">{{ $activeBatch->prediction_notes }}</div>
+                @endif
+
+                {{-- Tombol akhiri produksi dengan konfirmasi SweetAlert2 --}}
+                <form action="{{ route('batch.end', [$device, $activeBatch]) }}" method="POST" id="form-end-batch">
+                    @csrf
+                    <button type="button" class="btn btn-batch-end w-full" id="btn-end-batch"
+                            onclick="confirmEndBatch()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                        </svg>
+                        Akhiri Produksi
+                    </button>
+                </form>
+
+            </div>
+
+        @elseif($latestBatch && $latestBatch->status === 'failed')
+            {{-- ────────────────────────────────────────────────────── --}}
+            {{-- STATE B: Batch GAGAL / BUSUK (terdeteksi oleh AI)     --}}
+            {{-- ────────────────────────────────────────────────────── --}}
+            <div class="batch-failed-state">
+
+                {{-- Badge merah + info waktu gagal --}}
+                <div class="flex flex-wrap items-center gap-3 mb-4">
+                    <span class="badge badge-failed-glow" id="batch-status-badge">
+                        <span class="batch-pulse-dot batch-pulse-dot--failed"></span>
+                        Gagal / Busuk
+                    </span>
+                    <span class="text-xs px-2 py-1 rounded-md" style="background: rgba(148,163,184,0.1); color: var(--color-text-muted);">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 inline -mt-0.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Terdeteksi {{ $latestBatch->end_time ? $latestBatch->end_time->diffForHumans() : 'baru saja' }}
+                    </span>
+                </div>
+
+                {{-- Grid info batch gagal --}}
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="batch-info-cell" style="border-color: rgba(239,68,68,0.2);">
+                        <span class="batch-info-label">Waktu Mulai</span>
+                        <span class="batch-info-value">{{ $latestBatch->start_time->format('d M Y') }}</span>
+                        <span class="batch-info-sub">{{ $latestBatch->start_time->format('H:i:s') }}</span>
+                    </div>
+                    <div class="batch-info-cell" style="border-color: rgba(239,68,68,0.2);">
+                        <span class="batch-info-label">ID Batch</span>
+                        <span class="batch-info-value">#{{ str_pad($latestBatch->id, 4, '0', STR_PAD_LEFT) }}</span>
+                        <span class="batch-info-sub">{{ $latestBatch->start_time->diffForHumans() }}</span>
+                    </div>
+                </div>
+
+                {{-- Catatan kegagalan dari sistem --}}
+                @if($latestBatch->prediction_notes)
+                    <div class="mb-5 p-3 rounded-lg text-xs" style="background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.25); color: var(--color-text-secondary); white-space: pre-line; line-height: 1.6;">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" style="color: #ef4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <strong style="color: #ef4444;">Laporan Sistem</strong>
+                        </div>
+                        {{ $latestBatch->prediction_notes }}
+                    </div>
+                @endif
+
+                {{-- Tombol mulai batch baru --}}
+                <form action="{{ route('batch.start', $device) }}" method="POST" id="form-start-batch">
+                    @csrf
+                    <button type="submit" class="btn btn-batch-start w-full" id="btn-start-batch">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Mulai Produksi Baru
+                    </button>
+                </form>
+
+            </div>
+
+        @else
+            {{-- ─────────────────────────────────────────────── --}}
+            {{-- STATE C: Tidak ada batch berjalan (idle)        --}}
+            {{-- Tampil jika: belum ada batch, atau sudah selesai --}}
+            {{-- ─────────────────────────────────────────────── --}}
+            <div class="batch-idle-state">
+                <div class="batch-idle-illustration">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="color: var(--color-text-muted); opacity: 0.45;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </div>
+                <p class="text-sm font-medium" style="color: var(--color-text-muted);">Tidak ada produksi yang sedang berjalan</p>
+                <p class="text-xs mt-1 mb-5" style="color: var(--color-text-muted); opacity: 0.7;">
+                    Mulai sesi baru untuk merekam dan menganalisis data fermentasi secara terstruktur.
+                </p>
+                <form action="{{ route('batch.start', $device) }}" method="POST" id="form-start-batch">
+                    @csrf
+                    <button type="submit" class="btn btn-batch-start" id="btn-start-batch">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Mulai Produksi Baru
+                    </button>
+                </form>
+            </div>
+
+        @endif
+
+    </div>
+    {{-- / END CARD BATCH --}}
+
     {{-- =============================== --}}
     {{-- SENSOR CARDS ROW --}}
     {{-- =============================== --}}
@@ -59,8 +239,10 @@
             <span class="text-xs" style="color: var(--color-text-muted);">%</span>
         </div>
     </div>
+    {{-- / END SENSOR CARDS ROW --}}
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
 
         {{-- =============================== --}}
         {{-- CHART SECTION (2/3 width) --}}
@@ -414,6 +596,167 @@
         box-shadow: 0 0 8px rgba(52, 211, 153, 0.8);
     }
 }
+
+/* ============================================
+   BATCH STATUS CARD STYLES
+   ============================================ */
+
+/* Icon wrapper */
+.batch-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(56, 189, 248, 0.1));
+    color: var(--color-accent-teal);
+    flex-shrink: 0;
+}
+
+/* Idle state layout */
+.batch-idle-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 12px 0 4px;
+}
+.batch-idle-illustration {
+    margin-bottom: 12px;
+}
+
+/* START button — gradient teal/green */
+.btn-batch-start {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 28px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg, #059669, #0d9488);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(13, 148, 136, 0.35);
+    transition: all 0.25s ease;
+}
+.btn-batch-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(13, 148, 136, 0.5);
+    background: linear-gradient(135deg, #10b981, #14b8a6);
+}
+.btn-batch-start:active { transform: translateY(0); }
+
+/* END button — gradient red/rose */
+.btn-batch-end {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg, #dc2626, #e11d48);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+    transition: all 0.25s ease;
+}
+.btn-batch-end:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.45);
+    background: linear-gradient(135deg, #ef4444, #f43f5e);
+}
+.btn-batch-end:active { transform: translateY(0); }
+
+/* Active status badge glow */
+.badge-active-glow {
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+.badge-warning-glow {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+.badge-failed-glow {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+/* Pulse dot inside badge */
+.batch-pulse-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.batch-pulse-dot--active {
+    background: #34d399;
+    animation: batch-dot-pulse 2s ease-in-out infinite;
+}
+.batch-pulse-dot--warning {
+    background: #fbbf24;
+    animation: batch-dot-pulse 1.2s ease-in-out infinite;
+}
+.batch-pulse-dot--failed {
+    background: #ef4444;
+    animation: batch-dot-pulse 0.9s ease-in-out infinite;
+}
+@keyframes batch-dot-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(1.4); }
+}
+
+/* Info grid cells */
+.batch-info-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(148, 163, 184, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+.batch-info-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+}
+.batch-info-value {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1.2;
+}
+.batch-info-sub {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+}
 </style>
 @endsection
 
@@ -653,6 +996,45 @@ function updateFanUI(mode, status) {
 // ============================================
 flatpickr('#pdf-date-from', { allowInput: true, dateFormat: 'Y-m-d' });
 flatpickr('#pdf-date-to', { allowInput: true, dateFormat: 'Y-m-d' });
+
+// ============================================
+// BATCH: Confirm End Production (SweetAlert2)
+// ============================================
+function confirmEndBatch() {
+    // Fallback to native confirm if SweetAlert2 not loaded
+    if (typeof Swal === 'undefined') {
+        if (confirm('Akhiri produksi ini?\n\nBatch akan ditandai selesai dan data fermentasi akan disimpan.')) {
+            document.getElementById('form-end-batch').submit();
+        }
+        return;
+    }
+
+    Swal.fire({
+        title: 'Akhiri Sesi Produksi?',
+        html: 'Batch ini akan ditandai <strong>selesai</strong> dan waktu selesai akan dicatat.<br><br>Tindakan ini <u>tidak dapat dibatalkan</u>.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '✓ Ya, Akhiri Produksi',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#334155',
+        background: 'var(--color-bg-card, #1e293b)',
+        color: 'var(--color-text-primary, #f1f5f9)',
+        reverseButtons: true,
+        focusCancel: true,
+        customClass: {
+            popup:         'swal-batch-popup',
+            confirmButton: 'swal-batch-confirm',
+            cancelButton:  'swal-batch-cancel',
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const btn = document.getElementById('btn-end-batch');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:0.7">Mengakhiri...</span>'; }
+            document.getElementById('form-end-batch').submit();
+        }
+    });
+}
 
 // ============================================
 // HISTORICAL DATA TABLE

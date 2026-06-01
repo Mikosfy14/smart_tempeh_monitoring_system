@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceRegistrationController;
+use App\Http\Controllers\FermentationBatchController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\MasterDeviceController;
@@ -68,6 +69,10 @@ Route::middleware('auth')->group(function () {
     // Device self-registration (user flow)
     Route::post('/dashboard/register-device', [DeviceRegistrationController::class, 'register'])->name('device.register');
     Route::post('/dashboard/unregister-device', [DeviceRegistrationController::class, 'unregister'])->name('device.unregister');
+
+    // Fermentation Batch Management
+    Route::post('/dashboard/device/{device}/batch/start', [FermentationBatchController::class, 'startBatch'])->name('batch.start');
+    Route::post('/dashboard/device/{device}/batch/{batch}/end', [FermentationBatchController::class, 'endBatch'])->name('batch.end');
 
     // AJAX API endpoints for dashboard cards
     Route::get('/api/dashboard/live', [DashboardController::class, 'liveData'])->name('dashboard.live');

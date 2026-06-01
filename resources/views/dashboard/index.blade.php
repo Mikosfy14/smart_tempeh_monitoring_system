@@ -52,6 +52,19 @@
                 </div>
             </div>
 
+                {{-- Indikator Status Batch --}}
+        <div class="mt-2 mb-4">
+            @if($device->activeBatch)
+                <span class="badge {{ $device->activeBatch->status === 'semangit' ? 'badge-amber' : 'badge-green' }}">
+                    Sedang Produksi: {{ strtoupper($device->activeBatch->status) }}
+                </span>
+            @else
+                <span class="badge badge-muted">
+                    Standby (Tidak ada produksi)
+                </span>
+            @endif
+        </div>
+
             @php $cardSensorStatus = $device->sensor_status; @endphp
             <div class="grid grid-cols-2 gap-3 mb-4">
                 <div class="sensor-mini-card" style="border-left: 3px solid var(--color-accent-red);">
