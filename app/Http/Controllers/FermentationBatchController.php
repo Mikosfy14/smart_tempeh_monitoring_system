@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Device;
 use App\Models\FermentationBatch;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class FermentationBatchController extends Controller
@@ -78,5 +80,57 @@ class FermentationBatchController extends Controller
         return redirect()
             ->route('device.detail', $device->id)
             ->with('success', 'Sesi produksi berhasil diakhiri dan dicatat sebagai selesai.');
+    }
+
+    /**
+     * Tampilkan riwayat semua batch untuk device tertentu.
+     */
+    public function history(Device $device)
+    {
+        // Pastikan device adalah milik user yang login
+        if ($device->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Ambil data batch dengan pagination
+        $batches = FermentationBatch::where('device_id', $device->id)
+            ->orderBy('start_time', 'desc')
+            ->paginate(15);
+
+        return view('dashboard.batch-history', compact('device', 'batches'));
+    }
+
+    /**
+     * Export log batch ke PDF dalam rentang tanggal tertentu.
+     */
+    public function exportPdf(Request $request, Device $device)
+    {
+        // Pastikan device adalah milik user yang login
+        if ($device->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'date_from' => 'required|date',
+            'date_to'   => 'required|date|after_or_equal:date_from',
+        ]);
+
+        $batches = FermentationBatch::where('device_id', $device->id)
+            ->whereBetween('start_time', [
+                $request->date_from . ' 00:00:00',
+                $request->date_to . ' 23:59:59',
+            ])
+            ->orderBy('start_time', 'asc')
+            ->get();
+
+        $dateFrom = $request->date_from;
+        $dateTo   = $request->date_to;
+
+        $pdf = Pdf::loadView('pdf.batch-report', compact('device', 'batches', 'dateFrom', 'dateTo'))
+            ->setPaper('a4', 'landscape');
+
+        $filename = "Laporan_Batch_Produksi_{$device->device_id}_{$dateFrom}_to_{$dateTo}.pdf";
+
+        return $pdf->download($filename);
     }
 }

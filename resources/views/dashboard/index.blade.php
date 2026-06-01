@@ -43,27 +43,18 @@
                     <p class="text-xs mt-1" style="color: var(--color-text-muted);">ID: {{ $device->device_id }}</p>
                 </div>
                 <div class="flex items-center gap-2">
+                    @if($device->activeBatch)
+                        <span class="badge {{ $device->activeBatch->status === 'semangit' ? 'badge-amber' : 'badge-green' }}" style="font-size: 0.6rem; padding: 2px 6px;">
+                            {{ strtoupper($device->activeBatch->status) }}
+                        </span>
+                    @else
+                        <span class="badge badge-muted" style="font-size: 0.6rem; padding: 2px 6px;">
+                            Standby
+                        </span>
+                    @endif
                     <span class="badge {{ $device->is_online ? 'badge-green' : 'badge-red' }}" style="font-size: 0.6rem; padding: 2px 6px;" data-online-badge>{{ $device->is_online ? 'Online' : 'Offline' }}</span>
-                    <button class="btn-icon" style="color: var(--color-text-muted);" onclick="unregisterDevice({{ $device->id }}, '{{ $device->label_rak ?? $device->device_id }}')" title="Lepas alat">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
                 </div>
             </div>
-
-                {{-- Indikator Status Batch --}}
-        <div class="mt-2 mb-4">
-            @if($device->activeBatch)
-                <span class="badge {{ $device->activeBatch->status === 'semangit' ? 'badge-amber' : 'badge-green' }}">
-                    Sedang Produksi: {{ strtoupper($device->activeBatch->status) }}
-                </span>
-            @else
-                <span class="badge badge-muted">
-                    Standby (Tidak ada produksi)
-                </span>
-            @endif
-        </div>
 
             @php $cardSensorStatus = $device->sensor_status; @endphp
             <div class="grid grid-cols-2 gap-3 mb-4">
@@ -131,23 +122,6 @@
     @endif
 </div>
 
-{{-- UNREGISTER CONFIRM MODAL --}}
-<div class="modal-overlay" id="unregister-modal">
-    <div class="modal-content text-center">
-        <div class="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4" style="background: rgba(248, 113, 113, 0.1);">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" style="color: var(--color-accent-red);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-        </div>
-        <h3 class="text-lg font-bold mb-2">Lepas Alat</h3>
-        <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Lepas <strong id="unreg-device-name" class="text-white"></strong>? Data histori sensor tetap tersimpan.</p>
-        <input type="hidden" id="unreg-device-id">
-        <div class="flex gap-3">
-            <button class="btn btn-secondary flex-1" onclick="closeModal('unregister-modal')">Batal</button>
-            <button class="btn btn-danger flex-1" onclick="confirmUnregister()" id="btn-confirm-unreg">Lepas</button>
-        </div>
-    </div>
-</div>
 @endsection
 
 @push('scripts')
@@ -304,36 +278,6 @@
             if (data.success) updateCardFan(card, deviceId, data.fan.mode, data.fan.status);
         } catch (e) {
             console.error('Fan control error:', e);
-        }
-    }
-
-    // ============================================
-    // UNREGISTER DEVICE
-    // ============================================
-    function unregisterDevice(id, name) {
-        document.getElementById('unreg-device-id').value = id;
-        document.getElementById('unreg-device-name').textContent = name;
-        openModal('unregister-modal');
-    }
-
-    async function confirmUnregister() {
-        const deviceId = document.getElementById('unreg-device-id').value;
-        try {
-            await fetch('{{ route("device.unregister") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': window.csrfToken,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    device_id: deviceId
-                })
-            });
-            closeModal('unregister-modal');
-            window.location.reload();
-        } catch (e) {
-            alert('Gagal melepas alat.');
         }
     }
 </script>

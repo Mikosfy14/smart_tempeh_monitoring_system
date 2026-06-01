@@ -106,6 +106,10 @@
                     </button>
                 </form>
 
+                <div class="text-center mt-3">
+                    <a href="{{ route('batch.history', $device) }}" class="text-xs hover:underline" style="color: var(--color-text-muted);">Lihat Semua Riwayat Batch ➔</a>
+                </div>
+
             </div>
 
         @elseif($latestBatch && $latestBatch->status === 'failed')
@@ -167,6 +171,10 @@
                     </button>
                 </form>
 
+                <div class="text-center mt-3">
+                    <a href="{{ route('batch.history', $device) }}" class="text-xs hover:underline" style="color: var(--color-text-muted);">Lihat Semua Riwayat Batch ➔</a>
+                </div>
+
             </div>
 
         @else
@@ -186,7 +194,7 @@
                 </p>
                 <form action="{{ route('batch.start', $device) }}" method="POST" id="form-start-batch">
                     @csrf
-                    <button type="submit" class="btn btn-batch-start" id="btn-start-batch">
+                    <button type="submit" class="btn btn-batch-start w-full" id="btn-start-batch">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -194,6 +202,10 @@
                         Mulai Produksi Baru
                     </button>
                 </form>
+
+                <div class="text-center mt-3">
+                    <a href="{{ route('batch.history', $device) }}" class="text-xs hover:underline" style="color: var(--color-text-muted);">Lihat Semua Riwayat Batch ➔</a>
+                </div>
             </div>
 
         @endif
@@ -352,8 +364,24 @@
 
             {{-- PDF Export --}}
             <div class="card-static">
-                <h3 class="text-sm font-bold mb-4">Cetak Laporan PDF</h3>
-                <form action="{{ route('device.export-pdf', $device->id) }}" method="GET" id="pdf-form">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-bold">Cetak Laporan PDF</h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" style="color: var(--color-text-muted);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                </div>
+
+                {{-- Tabs Toggle --}}
+                <div class="flex mb-4 border-b border-gray-700/50">
+                    <button type="button" class="flex-1 pb-2 text-xs font-semibold text-center border-b-2 transition-colors export-tab-btn active" data-target="export-sensor-form" style="border-color: var(--color-accent-teal); color: var(--color-accent-teal);">
+                        Data Sensor
+                    </button>
+                    <button type="button" class="flex-1 pb-2 text-xs font-semibold text-center border-b-2 border-transparent transition-colors export-tab-btn" data-target="export-batch-form" style="color: var(--color-text-muted);">
+                        Riwayat Batch
+                    </button>
+                </div>
+
+                {{-- Tab 1: Export Sensor --}}
+                <form action="{{ route('device.export-pdf', $device->id) }}" method="GET" class="export-form active" id="export-sensor-form">
+                    <p class="text-xs mb-4" style="color: var(--color-text-muted);">Pilih rentang tanggal untuk mencetak data tren <strong>sensor</strong> harian.</p>
                     <div class="mb-3">
                         <label class="text-xs" style="color: var(--color-text-muted);">Tanggal Mulai</label>
                         <input type="text" name="date_from" class="form-input flatpickr-input" required id="pdf-date-from" value="{{ now()->subDays(7)->format('Y-m-d') }}" placeholder="YYYY-MM-DD" style="font-size: 0.85rem;">
@@ -364,7 +392,25 @@
                     </div>
                     <button type="submit" class="btn btn-secondary btn-sm w-full" id="btn-export-pdf">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        Download PDF
+                        Download PDF Sensor
+                    </button>
+                </form>
+
+                {{-- Tab 2: Export Batch --}}
+                <form action="{{ route('batch.export-pdf', $device) }}" method="POST" class="export-form hidden" id="export-batch-form">
+                    @csrf
+                    <p class="text-xs mb-4" style="color: var(--color-text-muted);">Pilih rentang waktu untuk mencetak rekapitulasi data <strong>sesi fermentasi (batch)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="text-xs" style="color: var(--color-text-muted);">Dari Tanggal</label>
+                        <input type="text" name="date_from" class="form-input flatpickr-input" required id="pdf-batch-date-from" value="{{ now()->subDays(30)->format('Y-m-d') }}" placeholder="YYYY-MM-DD" style="font-size: 0.85rem;">
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-xs" style="color: var(--color-text-muted);">Sampai Tanggal</label>
+                        <input type="text" name="date_to" class="form-input flatpickr-input" required id="pdf-batch-date-to" value="{{ now()->format('Y-m-d') }}" placeholder="YYYY-MM-DD" style="font-size: 0.85rem;">
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-sm w-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Download PDF Batch
                     </button>
                 </form>
             </div>
@@ -1100,5 +1146,43 @@ function addTableRow(sensors, fanStatus) {
     const counter = document.getElementById('table-row-count');
     if (counter) counter.textContent = Math.min(tbody.children.length, MAX_TABLE_ROWS) + ' data';
 }
+
+// ============================================
+// EXPORT PDF TABS LOGIC
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    const tabBtns = document.querySelectorAll('.export-tab-btn');
+    const forms = document.querySelectorAll('.export-form');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active classes from all buttons
+            tabBtns.forEach(b => {
+                b.classList.remove('active');
+                b.style.borderColor = 'transparent';
+                b.style.color = 'var(--color-text-muted)';
+            });
+
+            // Hide all forms
+            forms.forEach(f => {
+                f.classList.remove('active');
+                f.classList.add('hidden');
+            });
+
+            // Activate clicked button
+            btn.classList.add('active');
+            btn.style.borderColor = 'var(--color-accent-teal)';
+            btn.style.color = 'var(--color-accent-teal)';
+
+            // Show corresponding form
+            const targetId = btn.getAttribute('data-target');
+            const targetForm = document.getElementById(targetId);
+            if (targetForm) {
+                targetForm.classList.remove('hidden');
+                targetForm.classList.add('active');
+            }
+        });
+    });
+});
 </script>
 @endpush

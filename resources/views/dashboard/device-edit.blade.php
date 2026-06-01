@@ -71,6 +71,20 @@
                 <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
             </div>
         </form>
+
+        <hr style="border-color: var(--color-border-card); margin: 32px 0;">
+
+        <div>
+            <h3 class="text-sm font-bold mb-2" style="color: var(--color-accent-red);">Zona Berbahaya</h3>
+            <p class="text-xs mb-4" style="color: var(--color-text-secondary);">
+                Melepas alat akan menghilangkannya dari dashboard Anda, namun data riwayat tidak akan terhapus dari sistem.
+            </p>
+            <form action="{{ route('device.unregister') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin melepas perangkat ini dari akun Anda?');">
+                @csrf
+                <input type="hidden" name="device_id" value="{{ $device->id }}">
+                <button type="submit" class="btn btn-danger">Lepas Perangkat</button>
+            </form>
+        </div>
     </div>
 
 </div>

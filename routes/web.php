@@ -73,6 +73,10 @@ Route::middleware('auth')->group(function () {
     // Fermentation Batch Management
     Route::post('/dashboard/device/{device}/batch/start', [FermentationBatchController::class, 'startBatch'])->name('batch.start');
     Route::post('/dashboard/device/{device}/batch/{batch}/end', [FermentationBatchController::class, 'endBatch'])->name('batch.end');
+    
+    // Fermentation Batch History & Export
+    Route::get('/dashboard/device/{device}/batches', [FermentationBatchController::class, 'history'])->name('batch.history');
+    Route::post('/dashboard/device/{device}/batches/export-pdf', [FermentationBatchController::class, 'exportPdf'])->name('batch.export-pdf');
 
     // AJAX API endpoints for dashboard cards
     Route::get('/api/dashboard/live', [DashboardController::class, 'liveData'])->name('dashboard.live');
