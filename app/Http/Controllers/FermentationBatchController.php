@@ -133,4 +133,81 @@ class FermentationBatchController extends Controller
 
         return $pdf->download($filename);
     }
+    /**
+     * Update status dan end_time batch.
+     */
+    public function update(Request $request, Device $device, FermentationBatch $batch): RedirectResponse
+    {
+        // Pastikan device adalah milik user yang login
+        if ($device->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Pastikan batch memang milik device ini
+        if ($batch->device_id !== $device->id) {
+            abort(403);
+        }
+
+        $request->validate([
+            'status' => 'required|in:active,completed,failed,semangit',
+            'end_time' => 'nullable|date|after_or_equal:' . $batch->start_time,
+            'prediction_notes' => 'nullable|string',
+        ]);
+
+        $status = $request->status;
+        $endTime = $request->end_time;
+
+        if ($status === 'active') {
+            // Prevent Overlap
+            $hasOtherActiveBatch = \App\Models\FermentationBatch::where('device_id', $device->id)
+                ->where('id', '!=', $batch->id)
+                ->where('status', 'active')
+                ->exists();
+
+            if ($hasOtherActiveBatch) {
+                return redirect()->back()->with('error', 'Tidak dapat mengaktifkan batch ini. Perangkat sedang menjalankan proses fermentasi lain.');
+            }
+
+            // Reset End Time
+            $endTime = null;
+        } else {
+            // Auto-Fill End Time
+            if (empty($endTime)) {
+                $endTime = now();
+            }
+        }
+
+        $updateData = [
+            'status' => $status,
+            'end_time' => $endTime,
+        ];
+
+        if ($request->has('prediction_notes')) {
+            $updateData['prediction_notes'] = $request->prediction_notes;
+        }
+
+        $batch->update($updateData);
+
+        return redirect()->back()->with('success', 'Data batch berhasil diperbarui.');
+    }
+
+    /**
+     * Hapus record batch.
+     */
+    public function destroy(Device $device, FermentationBatch $batch): RedirectResponse
+    {
+        // Pastikan device adalah milik user yang login
+        if ($device->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Pastikan batch memang milik device ini
+        if ($batch->device_id !== $device->id) {
+            abort(403);
+        }
+
+        $batch->delete();
+
+        return redirect()->back()->with('success', 'Data batch berhasil dihapus.');
+    }
 }

@@ -181,7 +181,12 @@ class DashboardController extends Controller
         $user = Auth::user();
         $device = Device::where('id', $id)
             ->where('user_id', $user->id)
+            ->with('activeBatch')
             ->firstOrFail();
+
+        if ($device->activeBatch) {
+            return redirect()->route('device.detail', $id)->with('error', 'Tidak dapat mengubah pengaturan alat saat batch fermentasi sedang aktif.');
+        }
 
         return view('dashboard.device-edit', compact('device'));
     }
@@ -194,7 +199,12 @@ class DashboardController extends Controller
         $user = Auth::user();
         $device = Device::where('id', $id)
             ->where('user_id', $user->id)
+            ->with('activeBatch')
             ->firstOrFail();
+
+        if ($device->activeBatch) {
+            return redirect()->route('device.detail', $id)->with('error', 'Tidak dapat mengubah pengaturan alat saat batch fermentasi sedang aktif.');
+        }
 
         $request->validate([
             'device_name'        => 'nullable|string|max:255',

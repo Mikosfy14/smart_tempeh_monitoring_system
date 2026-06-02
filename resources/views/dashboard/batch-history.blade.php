@@ -55,6 +55,7 @@
                         <th style="padding: 12px; font-size: 0.75rem; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border-card);">DURASI</th>
                         <th style="padding: 12px; font-size: 0.75rem; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border-card);">STATUS</th>
                         <th style="padding: 12px; font-size: 0.75rem; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border-card);">CATATAN SISTEM</th>
+                        <th style="padding: 12px; font-size: 0.75rem; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border-card);">AKSI</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -98,10 +99,28 @@
                                 <span class="text-xs italic" style="color: var(--color-text-muted); opacity: 0.6;">- Tidak ada catatan -</span>
                             @endif
                         </td>
+                        <td style="padding: 14px 12px;">
+                            <div class="flex items-center gap-2">
+                                @if($batch->status === 'active')
+                                    <span class="text-xs" style="color: var(--color-text-muted); opacity: 0.7;">Kelola di Detail Alat</span>
+                                @else
+                                    <button type="button" class="px-3 py-1.5 text-xs rounded-md font-bold text-white bg-gray-700 hover:bg-gray-600 transition-colors border-none cursor-pointer" onclick="openEditBatchModal({{ $batch->id }}, '{{ $batch->status }}', '{{ $batch->end_time ? $batch->end_time->format('Y-m-d\TH:i') : '' }}', `{{ addslashes($batch->prediction_notes ?? '') }}`, '{{ route('batch.update', ['device' => $device->id, 'batch' => $batch->id]) }}')">
+                                        Edit Batch
+                                    </button>
+                                    <form id="delete-batch-{{ $batch->id }}" action="{{ route('batch.destroy', ['device' => $device->id, 'batch' => $batch->id]) }}" method="POST" class="m-0">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="button" class="px-3 py-1.5 text-xs rounded-md font-bold text-white bg-red-600 hover:bg-red-700 transition-colors border-none cursor-pointer" onclick="confirmDeleteBatch({{ $batch->id }})">
+                                            Hapus
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center" style="padding: 3rem; color: var(--color-text-muted);">
+                        <td colspan="7" class="text-center" style="padding: 3rem; color: var(--color-text-muted);">
                             <div class="flex flex-col items-center justify-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mb-3" style="opacity: 0.2;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -124,4 +143,85 @@
     </div>
 
 </div>
+
+{{-- EDIT BATCH MODAL --}}
+<div class="modal-overlay" id="edit-batch-modal">
+    <div class="modal-content" style="max-width: 500px; text-align: left;">
+        <h3 class="text-lg font-bold mb-4">Edit Data Batch</h3>
+        <form id="edit-batch-form" method="POST">
+            @csrf
+            @method('PUT')
+            
+            <div class="mb-4">
+                <label class="form-label">Status</label>
+                <select name="status" id="edit-batch-status" class="form-input" required>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="failed">Failed</option>
+                    <option value="semangit">Semangit</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label">Waktu Selesai (End Time)</label>
+                <input type="datetime-local" name="end_time" id="edit-batch-endtime" class="form-input">
+                <p class="text-xs mt-1" style="color: var(--color-text-muted);">Kosongkan jika batch masih berjalan (active/semangit).</p>
+            </div>
+
+            <div class="mb-6">
+                <label class="form-label">Catatan / Prediksi (prediction_notes)</label>
+                <textarea name="prediction_notes" id="edit-batch-notes" class="form-input" rows="5" placeholder="Masukkan catatan..."></textarea>
+            </div>
+            
+            <div class="flex gap-3">
+                <button type="button" class="btn btn-secondary flex-1" onclick="closeEditBatchModal()">Batal</button>
+                <button type="submit" class="btn btn-primary flex-1">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
+
+@push('scripts')
+<script>
+    function openEditBatchModal(batchId, status, endTime, notes, formAction) {
+        document.getElementById('edit-batch-form').action = formAction;
+        document.getElementById('edit-batch-status').value = status;
+        document.getElementById('edit-batch-endtime').value = endTime;
+        document.getElementById('edit-batch-notes').value = notes;
+        
+        document.getElementById('edit-batch-modal').classList.add('active');
+    }
+
+    function closeEditBatchModal() {
+        document.getElementById('edit-batch-modal').classList.remove('active');
+    }
+
+    function confirmDeleteBatch(batchId) {
+        if (typeof Swal === 'undefined') {
+            if (confirm('Yakin ingin menghapus data batch ini?')) {
+                document.getElementById('delete-batch-' + batchId).submit();
+            }
+            return;
+        }
+
+        Swal.fire({
+            title: 'Hapus Riwayat Batch?',
+            text: 'Data riwayat produksi ini akan dihapus secara permanen beserta catatannya.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#334155',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            background: 'var(--color-bg-card, #1e293b)',
+            color: 'var(--color-text-primary, #f1f5f9)',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('delete-batch-' + batchId).submit();
+            }
+        });
+    }
+</script>
+@endpush

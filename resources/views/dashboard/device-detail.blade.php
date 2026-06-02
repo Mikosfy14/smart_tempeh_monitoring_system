@@ -94,17 +94,33 @@
                     <div class="mb-4 p-3 rounded-lg text-xs" style="background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); color: var(--color-text-secondary); white-space: pre-line;">{{ $activeBatch->prediction_notes }}</div>
                 @endif
 
-                {{-- Tombol akhiri produksi dengan konfirmasi SweetAlert2 --}}
-                <form action="{{ route('batch.end', [$device, $activeBatch]) }}" method="POST" id="form-end-batch">
-                    @csrf
-                    <button type="button" class="btn btn-batch-end w-full" id="btn-end-batch"
-                            onclick="confirmEndBatch('active')">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-                        </svg>
-                        Akhiri Produksi
-                    </button>
-                </form>
+                {{-- Tombol aksi untuk batch aktif --}}
+                <div class="flex flex-col sm:flex-row gap-3 mt-5">
+                    {{-- Aksi 1: Akhiri Batch Resmi --}}
+                    <form action="{{ route('batch.update', ['device' => $device->id, 'batch' => $activeBatch->id]) }}" method="POST" id="form-end-batch" class="flex-1">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="status" value="completed">
+                        <button type="button" class="btn btn-batch-end w-full" id="btn-end-batch" onclick="confirmEndBatch('active')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                            </svg>
+                            Akhiri Batch
+                        </button>
+                    </form>
+
+                    {{-- Aksi 2: Batalkan & Hapus --}}
+                    <form action="{{ route('batch.destroy', ['device' => $device->id, 'batch' => $activeBatch->id]) }}" method="POST" id="form-delete-batch-{{ $activeBatch->id }}" class="flex-1">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button" class="btn btn-secondary w-full" onclick="confirmCancelBatch({{ $activeBatch->id }})" style="border-color: rgba(239, 68, 68, 0.5); color: #f87171;">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Hapus Batch (Batal)
+                        </button>
+                    </form>
+                </div>
 
             </div>
 
@@ -420,12 +436,22 @@
                 <p class="text-xs mb-4" style="color: var(--color-text-muted);">
                     Ubah nama alat atau sesuaikan ambang batas notifikasi peringatan sensor.
                 </p>
-                <a href="{{ route('device.edit', $device->id) }}" class="btn btn-secondary btn-sm w-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                    Edit Detail Alat
-                </a>
+                @if($activeBatch)
+                    <p class="text-xs text-amber-500 font-semibold mb-2">⚠ Tidak dapat mengubah alat saat batch sedang aktif.</p>
+                    <button type="button" class="btn btn-secondary btn-sm w-full" disabled style="opacity: 0.5; cursor: not-allowed;">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        Edit Detail Alat
+                    </button>
+                @else
+                    <a href="{{ route('device.edit', $device->id) }}" class="btn btn-secondary btn-sm w-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        Edit Detail Alat
+                    </a>
+                @endif
             </div>
 
         </div>
@@ -1115,6 +1141,34 @@ function confirmEndBatch(status = 'active') {
             }
         });
     }
+}
+
+function confirmCancelBatch(batchId) {
+    if (typeof Swal === 'undefined') {
+        if (confirm('Batalkan dan hapus batch ini?\n\nData batch akan dihapus permanen.')) {
+            document.getElementById('form-delete-batch-' + batchId).submit();
+        }
+        return;
+    }
+
+    Swal.fire({
+        title: 'Batalkan & Hapus Batch?',
+        html: 'Batch ini akan dibatalkan dan <strong>dihapus secara permanen</strong> dari riwayat.<br><br>Tindakan ini <u>tidak dapat dibatalkan</u>.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Hapus Batch',
+        cancelButtonText: 'Kembali',
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#334155',
+        background: 'var(--color-bg-card, #1e293b)',
+        color: 'var(--color-text-primary, #f1f5f9)',
+        reverseButtons: true,
+        focusCancel: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('form-delete-batch-' + batchId).submit();
+        }
+    });
 }
 
 // ============================================

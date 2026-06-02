@@ -86,7 +86,8 @@ Route::middleware('auth')->group(function () {
     // Fermentation Batch History & Export
     Route::get('/dashboard/device/{device}/batches', [FermentationBatchController::class, 'history'])->name('batch.history');
     Route::post('/dashboard/device/{device}/batches/export-pdf', [FermentationBatchController::class, 'exportPdf'])->name('batch.export-pdf');
-
+    Route::put('/dashboard/device/{device}/batch/{batch}', [FermentationBatchController::class, 'update'])->name('batch.update');
+    Route::delete('/dashboard/device/{device}/batch/{batch}', [FermentationBatchController::class, 'destroy'])->name('batch.destroy');
     // AJAX API endpoints for dashboard cards
     Route::get('/api/dashboard/live', [DashboardController::class, 'liveData'])->name('dashboard.live');
     Route::get('/api/dashboard/chart', [DashboardController::class, 'chartData'])->name('dashboard.chart');
@@ -124,6 +125,10 @@ Route::middleware('admin')->prefix('stm-internal')->group(function () {
     Route::get('/sensor-logs', [SensorLogController::class, 'index'])->name('admin.sensor-logs');
     Route::delete('/sensor-logs/purge', [SensorLogController::class, 'purgeOldLogs'])->name('admin.sensor-logs.purge');
 
+    // Fermentation Batches Management
+    Route::get('/batches', [\App\Http\Controllers\Admin\AdminBatchController::class, 'index'])->name('admin.batches');
+    Route::put('/batches/{batch}', [\App\Http\Controllers\Admin\AdminBatchController::class, 'update'])->name('admin.batches.update');
+    Route::delete('/batches/{batch}', [\App\Http\Controllers\Admin\AdminBatchController::class, 'destroy'])->name('admin.batches.destroy');
     // Admin Management (Master Admin only — controller enforces is_master check)
     Route::get('/admins', [AdminManagementController::class, 'index'])->name('admin.admins');
     Route::post('/admins', [AdminManagementController::class, 'store'])->name('admin.admins.store');
