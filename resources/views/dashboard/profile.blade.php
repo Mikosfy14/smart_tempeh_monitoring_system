@@ -47,7 +47,12 @@
 
             <div class="mb-4">
                 <label class="form-label">Email</label>
+                @if($user->google_id)
+                <input type="email" name="email" class="form-input opacity-60 cursor-not-allowed" style="background-color: rgba(0,0,0,0.15);" value="{{ old('email', $user->email) }}" required id="profile-email" readonly>
+                <p class="text-xs mt-1" style="color: var(--color-text-muted);">✓ Email terkoneksi ke Google (Otentikasi Utama)</p>
+                @else
                 <input type="email" name="email" class="form-input" value="{{ old('email', $user->email) }}" required id="profile-email">
+                @endif
                 @error('email') <span class="text-xs" style="color: var(--color-accent-red);">{{ $message }}</span> @enderror
             </div>
 
@@ -129,16 +134,15 @@
                 </div>
             </div>
             
-            <form action="{{ route('profile.unlink-google') }}" method="POST" class="border-t pt-4 mt-4" style="border-color: var(--color-border-card);">
+            <form id="form-unlink-google" action="{{ route('profile.unlink-google') }}" method="POST" style="display: none;">
                 @csrf
-                <label class="form-label text-xs mb-2 block text-left" style="color: var(--color-text-primary);">Masukkan password manual Anda untuk memutus koneksi ini:</label>
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <input type="password" name="password" class="form-input flex-1" placeholder="Password manual" required>
-                    <button type="submit" class="btn btn-danger shrink-0" onclick="return confirm('Yakin ingin memutus koneksi akun Google? Anda harus menggunakan password untuk login ke depannya.')">
-                        Putus Koneksi
-                    </button>
-                </div>
+                <input type="hidden" name="password" id="hidden-password-input">
             </form>
+            <div class="border-t pt-4 mt-4 flex justify-end" style="border-color: var(--color-border-card);">
+                <button type="button" class="btn btn-danger shrink-0" onclick="confirmUnlinkGoogle()">
+                    Putus Koneksi
+                </button>
+            </div>
         </div>
         @else
         <div class="flex items-center justify-between p-4 rounded-xl" style="background: var(--color-bg-card); border: 1px solid var(--color-border-card);">
@@ -247,6 +251,42 @@
 
 @push('scripts')
 <script>
+    function confirmUnlinkGoogle() {
+        if (typeof Swal === 'undefined') {
+            const pwd = prompt('Masukkan password manual Anda untuk memutus koneksi ini:');
+            if (pwd) {
+                document.getElementById('hidden-password-input').value = pwd;
+                document.getElementById('form-unlink-google').submit();
+            }
+            return;
+        }
+
+        Swal.fire({
+            title: 'Putus Koneksi Google',
+            text: 'Yakin ingin memutus koneksi akun Google? Anda harus menggunakan password untuk login ke depannya.',
+            input: 'password',
+            inputPlaceholder: 'Password manual',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Putus Koneksi',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#0D9488',
+            cancelButtonColor: '#334155',
+            background: 'var(--color-bg-card, #1e293b)',
+            color: 'var(--color-text-primary, #f1f5f9)',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Password wajib diisi!';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('hidden-password-input').value = result.value;
+                document.getElementById('form-unlink-google').submit();
+            }
+        });
+    }
+
     function togglePasswordVisibility(inputId, btn) {
         const input = document.getElementById(inputId);
         if (!input) return;
