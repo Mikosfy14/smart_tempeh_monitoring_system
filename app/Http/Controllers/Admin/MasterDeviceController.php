@@ -61,7 +61,6 @@ class MasterDeviceController extends Controller
             'label_rak' => 'nullable|string|max:255',
         ]);
 
-        // Prevent assigning already-registered devices
         if ($masterDevice->is_registered) {
             $message = 'Device ini sudah terdaftar oleh user lain.';
             if ($request->wantsJson()) {
@@ -70,8 +69,12 @@ class MasterDeviceController extends Controller
             return redirect()->route('admin.master-devices')->with('error', $message);
         }
 
-        // Create device record linked to the user
-        $device = Device::create([
+        // TUKANG SAPU OTOMATIS: Bersihkan rekam jejak perangkat "hantu" yang 
+        // sebelumnya tersangkut karena bug unassign versi lama.
+        \App\Models\Device::where('device_id', $masterDevice->device_id)->delete();
+
+        // Buat record perangkat dengan ID Primary Key yang baru
+        $device = \App\Models\Device::create([
             'user_id'        => $request->user_id,
             'device_name'    => $masterDevice->device_id,
             'device_id'      => $masterDevice->device_id,
@@ -80,7 +83,6 @@ class MasterDeviceController extends Controller
             'fan_status'     => 'OFF',
         ]);
 
-        // Mark as registered in whitelist
         $masterDevice->update(['is_registered' => true]);
 
         if ($request->wantsJson()) {
@@ -94,9 +96,6 @@ class MasterDeviceController extends Controller
         return redirect()->route('admin.master-devices')->with('success', 'Device berhasil di-assign.');
     }
 
-    /**
-     * Unassign a device from its current user (Admin action).
-     */
     public function unassignDevice(Request $request, MasterDevice $masterDevice)
     {
         if (!$masterDevice->is_registered) {
@@ -107,13 +106,14 @@ class MasterDeviceController extends Controller
             return redirect()->route('admin.master-devices')->with('error', $message);
         }
 
-        // Find the linked device record and nullify user
-        $device = Device::where('device_id', $masterDevice->device_id)->first();
+        // PENGHAPUSAN FISIK: Hapus baris dari tabel devices secara total.
+        // Relasi sensor_logs & fermentation_batches otomatis diselamatkan (set null)
+        // berkat file migrasi yang sudah dieksekusi sebelumnya.
+        $device = \App\Models\Device::where('device_id', $masterDevice->device_id)->first();
         if ($device) {
-            $device->update(['user_id' => null]);
+            $device->delete();
         }
 
-        // Mark as available again
         $masterDevice->update(['is_registered' => false]);
 
         if ($request->wantsJson()) {
