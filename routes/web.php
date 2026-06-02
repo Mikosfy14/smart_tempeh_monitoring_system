@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\MasterDeviceController;
 use App\Http\Controllers\Admin\SensorLogController;
 use App\Http\Controllers\Admin\AdminManagementController;
+use App\Http\Controllers\PasswordResetController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +25,12 @@ Route::get('/', function () {
 });
 
 // ============================================
+// Google OAuth Routes (Bebas Middleware)
+// ============================================
+Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
+Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+
+// ============================================
 // Guest Routes (not logged in)
 // ============================================
 Route::middleware('guest')->group(function () {
@@ -34,13 +41,15 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 
-    // Google OAuth
-    Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
-    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
-
     // Complete Profile (for new Google OAuth users)
     Route::get('/register/complete', [AuthController::class, 'showCompleteProfile'])->name('register.complete');
     Route::post('/register/complete', [AuthController::class, 'completeProfile']);
+
+    // Password Reset
+    Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
 });
 
 // Admin login (hidden, non-obvious URL — only admins should know this)

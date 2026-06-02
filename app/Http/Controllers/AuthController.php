@@ -116,6 +116,7 @@ class AuthController extends Controller
         // Jika user sudah login, otomatis tandai ini sebagai proses TAUTAN (Linking)
         if (Auth::check()) {
             session(['linking_google' => true]);
+            session()->save(); // Simpan session secara paksa sebelum redirect ke luar
         }
 
         return Socialite::driver('google')->redirect();
@@ -180,19 +181,21 @@ class AuthController extends Controller
         // 2. NORMAL LOGIN / REGISTRATION
         // ==========================================
 
-        // Cari user berdasarkan google_id atau email
-        $user = User::where('google_id', $googleUser->getId())
-            ->orWhere('email', $googleUser->getEmail())
-            ->first();
+        // Cari user hanya berdasarkan google_id
+        $userByGoogleId = User::where('google_id', $googleUser->getId())->first();
 
-        if ($user) {
-            // Update google_id jika user lama baru pertama kali login via Google
-            if (!$user->google_id) {
-                $user->update(['google_id' => $googleUser->getId()]);
-            }
-
-            Auth::login($user, true);
+        if ($userByGoogleId) {
+            Auth::login($userByGoogleId, true);
             return redirect()->intended(route('dashboard'));
+        }
+
+        // Jika tidak ketemu dari google_id, cari berdasarkan email
+        $userByEmail = User::where('email', $googleUser->getEmail())->first();
+
+        if ($userByEmail) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Akun dengan email ini sudah terdaftar. Silakan login menggunakan password Anda. Jika ingin menggunakan login Google, silakan tautkan kembali melalui menu Edit Profil.'
+            ]);
         }
 
         // User Baru — simpan data ke session dan arahkan ke form lengkapi profil

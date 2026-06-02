@@ -95,14 +95,12 @@ class DashboardController extends Controller
     {
         // Beri tanda ke session bahwa ini adalah proses tautan akun, bukan login biasa
         session(['linking_google' => true]);
+        session()->save(); // Simpan session secara paksa sebelum redirect ke luar
 
         return \Laravel\Socialite\Facades\Socialite::driver('google')->redirect();
     }
 
-    /**
-     * Memutuskan koneksi akun Google dari profil saat ini.
-     */
-    public function unlinkGoogle()
+    public function unlinkGoogle(Request $request)
     {
         $user = Auth::user();
 
@@ -110,6 +108,18 @@ class DashboardController extends Controller
         if (empty($user->password)) {
             return redirect()->route('profile.edit')->withErrors([
                 'google' => 'Anda belum mengatur password manual! Silakan atur password terlebih dahulu sebelum memutuskan koneksi Google untuk menghindari kehilangan akses ke akun Anda.'
+            ]);
+        }
+
+        $request->validate([
+            'password' => 'required|string',
+        ], [
+            'password.required' => 'Password wajib diisi untuk memutus koneksi Google.',
+        ]);
+
+        if (!Hash::check($request->password, $user->password)) {
+            return redirect()->route('profile.edit')->withErrors([
+                'google' => 'Password yang Anda masukkan salah. Gagal memutus koneksi.'
             ]);
         }
 
