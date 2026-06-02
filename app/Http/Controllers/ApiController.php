@@ -27,6 +27,21 @@ class ApiController extends Controller
      */
     public function telemetry(Request $request)
     {
+        // ================================================
+        // SECURITY GUARD: STATIC API KEY CHECK
+        // ================================================
+        $apiKey = $request->header('X-API-Key');
+        $validKey = env('ESP32_API_KEY');
+
+        if (!$validKey || $apiKey !== $validKey) {
+            Log::warning('Unauthorized API access attempt to telemetry endpoint.', ['ip' => $request->ip()]);
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Akses ditolak: API Key tidak valid atau tidak ditemukan.'
+            ], 401);
+        }
+        // ================================================
+
         $request->validate([
             'device_id'     => 'required|string',
             'internal_temp' => 'required|numeric',
@@ -36,9 +51,6 @@ class ApiController extends Controller
         ]);
 
         // Find the device by its hardware ID
-        // Eager-load 'user' saja. activeBatch TIDAK di-eager-load di sini
-        // karena ofMany() + closure tidak reliable di context API request.
-        // Gunakan direct query di bawah untuk memastikan batch selalu ditemukan.
         $device = Device::where('device_id', $request->device_id)
             ->with('user')
             ->first();
@@ -53,8 +65,6 @@ class ApiController extends Controller
         // ================================================
         // BATCH INTEGRATION — Direct query (bukan eager-load)
         // ================================================
-        // Direct query jauh lebih reliable daripada ofMany() eager-load
-        // untuk memastikan batch_id selalu ter-bind ke setiap sensor log.
         $activeBatch = FermentationBatch::where('device_id', $device->id)
             ->whereIn('status', ['active', 'semangit'])
             ->orderByDesc('start_time')
@@ -80,9 +90,6 @@ class ApiController extends Controller
         // ================================================
         // PREDICTIVE ANALYSIS — Jalankan expert system
         // ================================================
-        // Analisis HANYA jika ada batch yang sedang aktif/semangit.
-        // Service ini akan mengevaluasi Rules, mengubah status batch jika perlu,
-        // dan mengirim notifikasi WA (dengan perlindungan anti-spam via Cache).
         if ($activeBatch) {
             try {
                 $this->predictor->analyze($activeBatch, $newLog);
@@ -162,8 +169,6 @@ class ApiController extends Controller
 
         // ================================================
         // Consistent JSON response for ESP32
-        // Always includes fan_status, operation_mode, thresholds,
-        // and batch info so ESP32 can sync its local logic.
         // ================================================
         return response()->json([
             'status'           => 'success',
@@ -176,10 +181,9 @@ class ApiController extends Controller
                 'amonia'   => $amoniaThreshold,
                 'humidity' => $humidityThreshold,
             ],
-            // Info batch untuk keperluan debug / monitoring ESP32
             'batch'            => $activeBatch ? [
                 'id'     => $activeBatch->id,
-                'status' => $activeBatch->status, // Status terbaru setelah analisis prediktif
+                'status' => $activeBatch->status,
             ] : null,
             'server_time'      => now()->format('Y-m-d H:i:s'),
         ]);
@@ -191,6 +195,20 @@ class ApiController extends Controller
      */
     public function status(Request $request)
     {
+        // ================================================
+        // SECURITY GUARD: STATIC API KEY CHECK
+        // ================================================
+        $apiKey = $request->header('X-API-Key');
+        $validKey = env('ESP32_API_KEY');
+
+        if (!$validKey || $apiKey !== $validKey) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Akses ditolak: API Key tidak valid atau tidak ditemukan.'
+            ], 401);
+        }
+        // ================================================
+
         $request->validate([
             'device_id' => 'required|string',
         ]);
