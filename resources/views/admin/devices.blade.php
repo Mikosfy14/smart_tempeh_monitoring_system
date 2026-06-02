@@ -258,7 +258,7 @@
     async function confirmDelete() {
         const id = document.getElementById('delete-id').value;
         try {
-            await fetch(`/admin/master-devices/${id}`, {
+            await fetch(`{{ url('/stm-internal/master-devices') }}/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': window.csrfToken,
@@ -294,7 +294,7 @@
         };
 
         try {
-            const res = await fetch(`/admin/master-devices/${masterId}/assign`, {
+            const res = await fetch(`{{ url('/stm-internal/master-devices') }}/${masterId}/assign`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -330,7 +330,7 @@
     async function confirmUnassign() {
         const id = document.getElementById('unassign-id').value;
         try {
-            await fetch(`/admin/master-devices/${id}/unassign`, {
+            await fetch(`{{ url('/stm-internal/master-devices') }}/${id}/unassign`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': window.csrfToken,

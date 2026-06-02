@@ -241,7 +241,7 @@
         if (pw) body.password = pw;
 
         try {
-            const res = await fetch(`/admin/users/${userId}`, {
+            const res = await fetch(`{{ url('/stm-internal/users') }}/${userId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -276,7 +276,7 @@
     async function confirmDelete() {
         const userId = document.getElementById('delete-user-id').value;
         try {
-            await fetch(`/admin/users/${userId}`, {
+            await fetch(`{{ url('/stm-internal/users') }}/${userId}`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': window.csrfToken,
