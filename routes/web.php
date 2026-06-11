@@ -19,9 +19,9 @@ use App\Http\Controllers\PasswordResetController;
 |--------------------------------------------------------------------------
 */
 
-// Redirect root to login
+// Show landing page on root
 Route::get('/', function () {
-    return redirect()->route('login');
+    return view('welcome');
 });
 
 // ============================================
