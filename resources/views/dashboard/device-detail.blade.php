@@ -301,12 +301,6 @@
                 </button>
             </div>
 
-            {{-- Loading Overlay --}}
-            <div id="chart-loading" style="position: absolute; inset: 0; display: none; z-index: 10; border-radius: var(--radius-lg); background: rgba(var(--color-bg-primary-rgb, 15, 23, 42), 0.85); align-items: center; justify-content: center; flex-direction: column; gap: 12px;">
-                <div style="width: 36px; height: 36px; border: 3px solid var(--color-border-card); border-top-color: var(--color-accent-teal); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                <span class="text-sm" style="color: var(--color-text-secondary);">Memuat data...</span>
-            </div>
-
             <div style="height: 320px;">
                 <canvas id="sensor-chart"></canvas>
             </div>
@@ -905,21 +899,9 @@ document.querySelectorAll('.chart-filter-btn').forEach(btn => {
 });
 
 // ============================================
-// LOADING STATE HELPERS
+// LIVE POLLING (every 1s — real-time)
 // ============================================
-function showChartLoading() {
-    const el = document.getElementById('chart-loading');
-    el.style.display = 'flex';
-}
-function hideChartLoading() {
-    const el = document.getElementById('chart-loading');
-    el.style.display = 'none';
-}
-
-// ============================================
-// LIVE POLLING (every 5s)
-// ============================================
-setInterval(pollSensorData, 5000);
+setInterval(pollSensorData, 1000);
 
 async function pollSensorData() {
     try {
@@ -972,6 +954,11 @@ async function pollSensorData() {
                 relayBadge.className = 'badge ' + (data.sensor_status.relay === 'ON' ? 'badge-green' : 'badge-muted');
             }
         }
+
+        // Update batch status (real-time tanpa refresh)
+        if (data.batch) {
+            updateBatchStatus(data.batch);
+        }
     } catch (e) { console.error('Poll error:', e); }
 }
 
@@ -998,12 +985,39 @@ function updateVal(id, value, threshold) {
 }
 
 // ============================================
-// CHART REFRESH
+// BATCH STATUS REAL-TIME UPDATE
 // ============================================
-setInterval(refreshChart, 60000);
+let lastBatchStatus = '{{ $activeBatch ? $activeBatch->status : ($latestBatch && $latestBatch->status === "failed" ? "failed" : "idle") }}';
+
+function updateBatchStatus(batchData) {
+    const activeBatch = batchData.active;
+    const latestBatch = batchData.latest;
+    const statusBadge = document.getElementById('batch-status-badge');
+    const notesEl = document.querySelector('.batch-active-state .mb-4:last-of-type, .batch-failed-state .mb-5:last-of-type');
+
+    // Tentukan status saat ini
+    let currentStatus = 'idle';
+    if (activeBatch) {
+        currentStatus = activeBatch.status;
+    } else if (latestBatch && latestBatch.status === 'failed') {
+        currentStatus = 'failed';
+    }
+
+    // Skip update jika status tidak berubah
+    if (currentStatus === lastBatchStatus) return;
+    lastBatchStatus = currentStatus;
+
+    // Reload halaman untuk update card batch (karena struktur HTML berbeda per state)
+    // Ini memastikan tombol, badge, dan layout berubah sesuai status
+    location.reload();
+}
+
+// ============================================
+// CHART REFRESH (setiap 5 detik)
+// ============================================
+setInterval(refreshChart, 5000);
 
 async function refreshChart() {
-    showChartLoading();
     try {
         const res = await fetch(`/api/dashboard/chart?device_id=${DEVICE_ID}&range=${currentRange}`, {
             headers: { 'X-CSRF-TOKEN': window.csrfToken, 'Accept': 'application/json' }
@@ -1016,7 +1030,6 @@ async function refreshChart() {
         sensorChart.data.datasets[3].data = data.humidity;
         sensorChart.update('none');
     } catch (e) { console.error('Chart error:', e); }
-    finally { hideChartLoading(); }
 }
 
 // ============================================

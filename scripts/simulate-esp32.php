@@ -43,26 +43,30 @@ $INTERVAL_SECONDS = 5;
 $PHASE_PAUSE_SECONDS = 3;
 
 // ============================================================================
-//  SKENARIO ALERT DEMO — Target 5-6 menit
+//  SKENARIO ALERT DEMO — Sesuai logic FermentationPredictionService & WhatsAppService
 // ============================================================================
 //
-//  FASE  1: Normal           (20 data × 5s = 1m 40s)
-//           Suhu 30-33°C, amonia 5-15 ppm, humidity 70-80%
-//           → Dashboard menampilkan grafik stabil, kipas OFF
+//  FASE  1: NORMAL            (20 data × 5s = 1m 40s)
+//           Suhu ~31°C, amonia ~8 ppm, humidity ~75%
+//           → Semua di bawah threshold, tidak ada alert
 //
-//  FASE  2: Suhu Naik        (16 data × 4s = 1m 04s)
-//           Suhu 34→38°C, amonia 15-30 ppm
-//           → Alert WhatsApp suhu tinggi, kipas AUTO ON
+//  FASE  2: SUHU NAIK         (20 data × 5s = 1m 40s)
+//           Suhu 31→37°C, amonia ~20 ppm
+//           → Trigger: temp > 35°C → Fan AUTO ON + WA alert suhu
 //
-//  FASE  3: SEMANGIT         (16 data × 4s = 1m 04s)
-//           Suhu 37-39°C, amonia 60→130 ppm
-//           → Expert system trigger SEMANGIT, WhatsApp alert batch
+//  FASE  3: AMONIA NAIK       (10 data × 5s = 50s)
+//           Amonia 25→55 ppm, suhu ~37°C
+//           → Trigger: amonia > 25 ppm → WA alert amonia
 //
-//  FASE  4: FAILED           (10 data × 3s = 30s)
-//           Amonia 180→280 ppm, suhu masih tinggi
-//           → Expert system trigger FAILED, WhatsApp alert batch
+//  FASE  4: SEMANGIT           (15 data × 5s = 1m 15s)
+//           Amonia 60→130 ppm, suhu ~38°C
+//           → Trigger: amonia > 100 ppm → Batch → semangit + WA alert
 //
-//  Total: ~5 menit 25 detik (termasuk jeda antar fase)
+//  FASE  5: FAILED             (10 data × 5s = 50s)
+//           Amonia 200→280 ppm
+//           → Trigger: amonia > 250 ppm → Batch → failed + WA alert
+//
+//  Total: ~6 menit (tekan Enter di setiap pergantian fase)
 //
 //  ============================================================================
 
@@ -174,61 +178,102 @@ function fmtSensor(float $val, int $decimals = 1): string {
 
 function getScenario(): array {
     return [
-        // ── FASE 1: Normal ──────────────────────────────────────────────
+
+        // ════════════════════════════════════════════════════════════════
+        // FASE 1: NORMAL — Kondisi awal fermentasi
+        // ════════════════════════════════════════════════════════════════
+        // Semua sensor di bawah threshold. Tidak ada alert.
         // 20 data × 5 detik = 1 menit 40 detik
         [
             'name'     => 'NORMAL',
+            'desc'     => 'Kondisi awal fermentasi. Semua sensor stabil di bawah threshold.',
             'color'    => 'green',
             'icon'     => '🟢',
             'count'    => 20,
-            'interval' => 5, // detik
+            'interval' => 5,
             'gen'      => function(int $i) {
                 return [
-                    'internal_temp' => noisy(31.5, 1.5),
-                    'amonia_level'  => noisy(8.0, 4.0),
+                    'internal_temp' => noisy(31.5, 1.5),   // < 35°C (threshold)
+                    'amonia_level'  => noisy(8.0, 4.0),    // < 25 ppm (threshold)
                     'room_temp'     => noisy(28.0, 1.0),
-                    'humidity'      => noisy(75.0, 5.0),
+                    'humidity'      => noisy(75.0, 5.0),    // < 90% (threshold)
                 ];
             },
         ],
 
-        // ── FASE 2: Suhu Naik (trigger threshold alert + fan ON) ────────
-        // 16 data × 4 detik = 1 menit 4 detik
+        // ════════════════════════════════════════════════════════════════
+        // FASE 2: SUHU NAIK — Trigger WhatsAppService threshold alert
+        // ════════════════════════════════════════════════════════════════
+        // Suhu naik gradual melewati 35°C (temp_threshold default).
+        // → ApiController: internal_temp > tempThreshold → Fan AUTO ON
+        // → WhatsAppService: sendAlert($user, $device, 'temp', $value)
+        // 20 data × 5 detik = 1 menit 40 detik
         [
             'name'     => 'SUHU NAIK',
+            'desc'     => 'Suhu melewati 35°C → Fan AUTO ON + WhatsApp alert suhu.',
             'color'    => 'yellow',
-            'icon'     => '🟡',
-            'count'    => 16,
-            'interval' => 4, // detik (lebih cepat — fase menarik)
+            'icon'     => '🌡',
+            'count'    => 20,
+            'interval' => 5,
             'gen'      => function(int $i) {
-                $progress = $i / 15; // 0 → 1
-                $temp = 34.0 + ($progress * 4.0);
+                $progress = $i / 19; // 0 → 1
+                $temp = 31.5 + ($progress * 5.5); // 31.5 → 37°C (lewati 35°C)
                 return [
-                    'internal_temp' => noisy($temp, 0.8),
-                    'amonia_level'  => noisy(20.0, 8.0),
+                    'internal_temp' => noisy($temp, 0.5),
+                    'amonia_level'  => noisy(18.0, 6.0),   // masih < 25 ppm
                     'room_temp'     => noisy(28.5, 0.5),
                     'humidity'      => noisy(76.0, 3.0),
                 ];
             },
         ],
 
-        // ── Jeda antar fase ─────────────────────────────────────────────
-        'pause' => 3,
+        // ════════════════════════════════════════════════════════════════
+        // FASE 3: AMONIA NAIK — Trigger WhatsAppService threshold alert
+        // ════════════════════════════════════════════════════════════════
+        // Amonia naik melewati 25 ppm (amonia_threshold default).
+        // → ApiController: amonia_level > amoniaThreshold
+        // → WhatsAppService: sendAlert($user, $device, 'amonia', $value)
+        // 10 data × 5 detik = 50 detik
+        [
+            'name'     => 'AMONIA NAIK',
+            'desc'     => 'Amonia melewati 25 ppm → WhatsApp alert amonia.',
+            'color'    => 'amber',
+            'icon'     => '💨',
+            'count'    => 10,
+            'interval' => 5,
+            'gen'      => function(int $i) {
+                $progress = $i / 9;
+                $amonia = 18.0 + ($progress * 37.0); // 18 → 55 ppm (lewati 25 ppm)
+                return [
+                    'internal_temp' => noisy(37.0, 0.5),    // suhu tetap tinggi
+                    'amonia_level'  => noisy($amonia, 3.0),
+                    'room_temp'     => noisy(28.5, 0.5),
+                    'humidity'      => noisy(77.0, 2.0),
+                ];
+            },
+        ],
 
-        // ── FASE 3: SEMANGIT (amonia naik → trigger expert system) ──────
-        // 16 data × 4 detik = 1 menit 4 detik
+        // ════════════════════════════════════════════════════════════════
+        // FASE 4: SEMANGIT — Trigger FermentationPredictionService Rule 1
+        // ════════════════════════════════════════════════════════════════
+        // Amonia sesaat > 100 ppm (semangitAmoniaInstant).
+        // Expert system butuh min 3 data di window 15 menit → sudah terpenuhi.
+        // → FermentationPredictionService: checkRuleSemangit() = true
+        // → Batch status: active → semangit
+        // → WhatsAppService: sendBatchTransitionNotification('semangit')
+        // 15 data × 5 detik = 1 menit 15 detik
         [
             'name'     => 'SEMANGIT',
+            'desc'     => 'Amonia > 100 ppm → Expert system trigger SEMANGIT + WhatsApp batch alert.',
             'color'    => 'yellow',
             'icon'     => '⚠️',
-            'count'    => 16,
-            'interval' => 4, // detik
+            'count'    => 15,
+            'interval' => 5,
             'gen'      => function(int $i) {
-                $progress = $i / 15;
-                $amonia = 60.0 + ($progress * 70.0); // 60 → 130 ppm
-                $temp = 37.0 + ($progress * 2.0);    // 37 → 39°C
+                $progress = $i / 14;
+                $amonia = 60.0 + ($progress * 70.0); // 60 → 130 ppm (lewati 100 ppm)
                 return [
-                    'internal_temp' => noisy($temp, 0.5),
+                    'internal_temp' => noisy(37.5, 0.8),    // avg > 36.5°C juga
                     'amonia_level'  => noisy($amonia, 5.0),
                     'room_temp'     => noisy(29.0, 0.5),
                     'humidity'      => noisy(78.0, 2.0),
@@ -236,28 +281,33 @@ function getScenario(): array {
             },
         ],
 
-        // ── Jeda antar fase ─────────────────────────────────────────────
-        'pause' => 3,
-
-        // ── FASE 4: FAILED (amonia kritis → trigger failed) ─────────────
-        // 10 data × 3 detik = 30 detik (cepat — klimaks)
+        // ════════════════════════════════════════════════════════════════
+        // FASE 5: FAILED — Trigger FermentationPredictionService Rule 2
+        // ════════════════════════════════════════════════════════════════
+        // Amonia sesaat > 250 ppm (failedAmoniaThreshold).
+        // → FermentationPredictionService: checkRuleFailed() = true
+        // → Batch status: semangit → failed
+        // → WhatsAppService: sendBatchTransitionNotification('failed')
+        // 10 data × 5 detik = 50 detik
         [
             'name'     => 'FAILED',
+            'desc'     => 'Amonia > 250 ppm → Expert system trigger FAILED + WhatsApp batch alert.',
             'color'    => 'red',
             'icon'     => '🔴',
             'count'    => 10,
-            'interval' => 3, // detik (paling cepat — klimaks demo)
+            'interval' => 5,
             'gen'      => function(int $i) {
                 $progress = $i / 9;
-                $amonia = 180.0 + ($progress * 100.0); // 180 → 280 ppm
+                $amonia = 200.0 + ($progress * 80.0); // 200 → 280 ppm (lewati 250 ppm)
                 return [
-                    'internal_temp' => noisy(38.5, 1.0),
+                    'internal_temp' => noisy(38.0, 1.0),
                     'amonia_level'  => noisy($amonia, 8.0),
                     'room_temp'     => noisy(29.0, 0.5),
                     'humidity'      => noisy(80.0, 2.0),
                 ];
             },
         ],
+
     ];
 }
 
@@ -341,32 +391,29 @@ $scenario = getScenario();
 $dataCount = 0;
 $alertsLog = [];
 $startTime = time();
+$phaseNum = 0;
 
 foreach ($scenario as $phase) {
-    // Handle jeda antar fase
-    if (is_array($phase) && isset($phase['pause'])) {
-        echo "\n";
-        echo color("  ⏸ Jeda {$phase['pause']} detik...", 'dim') . "\n";
-        sleep($phase['pause']);
-        echo "\n";
-        continue;
-    }
-
-    // Skip jika bukan array fase
     if (!is_array($phase) || !isset($phase['gen'])) continue;
+    $phaseNum++;
 
     $name     = $phase['name'];
+    $desc     = $phase['desc'] ?? '';
     $color    = $phase['color'];
     $icon     = $phase['icon'];
     $count    = $phase['count'];
-    $interval = $phase['interval'] ?? $INTERVAL_SECONDS; // Interval per-fase
+    $interval = $phase['interval'] ?? $INTERVAL_SECONDS;
 
-    // Header fase
-    $phaseDur = sprintf("%dm %02ds", floor($count * $interval / 60), ($count * $interval) % 60);
-    echo color("  ┌─────────────────────────────────────────────────────", $color) . "\n";
-    echo color("  │  {$icon} FASE: {$name}", $color) . "\n";
-    echo color("  │  Mengirim {$count} data (setiap {$interval} detik ≈ {$phaseDur})", $color) . "\n";
-    echo color("  └─────────────────────────────────────────────────────", $color) . "\n";
+    // Prompt user sebelum fase dimulai
+    echo "\n";
+    echo color("  ╔═══════════════════════════════════════════════════════════════", $color) . "\n";
+    echo color("  ║  {$icon} FASE {$phaseNum}: {$name}", $color) . "\n";
+    echo color("  ║  {$desc}", $color) . "\n";
+    echo color("  ║  Mengirim {$count} data × {$interval} detik", $color) . "\n";
+    echo color("  ╚═══════════════════════════════════════════════════════════════", $color) . "\n";
+    echo "\n";
+    echo color("  Tekan [ENTER] untuk memulai fase ini...", 'dim');
+    fgets(STDIN);
     echo "\n";
 
     for ($i = 0; $i < $count; $i++) {

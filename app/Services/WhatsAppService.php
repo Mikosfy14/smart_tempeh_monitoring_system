@@ -173,14 +173,14 @@ class WhatsAppService
                 . "Rak: *{$label}*\n"
                 . "Device ID: {$deviceId}\n"
                 . "Suhu Internal: *{$value}°C*\n\n"
-                . ":information_source: Kipas pendingin telah *DINYALAKAN OTOMATIS*.\n"
+                . "Kipas pendingin telah *DINYALAKAN OTOMATIS*.\n"
                 . "Waktu: {$timestamp}",
 
             'amonia' => "⚠️ *PERINGATAN GAS AMONIA TINGGI*\n\n"
                 . "Rak: *{$label}*\n"
                 . "Device ID: {$deviceId}\n"
                 . "Level Amonia: *{$value} ppm*\n\n"
-                . ":information_source: Segera periksa kondisi fermentasi tempe Anda.\n" 
+                . "Segera periksa kondisi fermentasi tempe Anda!\n" 
                 . "Waktu: {$timestamp}",
 
             'humidity' => "⚠️ *PERINGATAN KELEMBAPAN TINGGI*\n\n"

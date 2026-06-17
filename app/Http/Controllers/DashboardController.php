@@ -281,6 +281,16 @@ class DashboardController extends Controller
 
         $latestLog = $device->latestLog;
 
+        // Load batch info for real-time status updates
+        $activeBatch = \App\Models\FermentationBatch::where('device_id', $device->id)
+            ->whereIn('status', ['active', 'semangit'])
+            ->orderByDesc('start_time')
+            ->first();
+
+        $latestBatch = \App\Models\FermentationBatch::where('device_id', $device->id)
+            ->orderByDesc('start_time')
+            ->first();
+
         return response()->json([
             'sensors' => $latestLog ? [
                 'internal_temp' => $latestLog->internal_temp,
@@ -294,6 +304,22 @@ class DashboardController extends Controller
             'fan' => [
                 'status' => $device->fan_status,
                 'mode'   => $device->operation_mode,
+            ],
+            'batch' => [
+                'active' => $activeBatch ? [
+                    'id'               => $activeBatch->id,
+                    'status'           => $activeBatch->status,
+                    'prediction_notes' => $activeBatch->prediction_notes,
+                    'duration_hours'   => $activeBatch->duration_hours,
+                    'start_time'       => $activeBatch->start_time->format('d M Y H:i:s'),
+                ] : null,
+                'latest' => $latestBatch ? [
+                    'id'               => $latestBatch->id,
+                    'status'           => $latestBatch->status,
+                    'prediction_notes' => $latestBatch->prediction_notes,
+                    'end_time'         => $latestBatch->end_time?->format('d M Y H:i:s'),
+                    'start_time'       => $latestBatch->start_time->format('d M Y H:i:s'),
+                ] : null,
             ],
             'is_online'     => $device->is_online,
             'sensor_status' => $device->sensor_status,
