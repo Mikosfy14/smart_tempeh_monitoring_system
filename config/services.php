@@ -40,7 +40,7 @@ return [
     ],
 
     'wa_gateway' => [
-        'url' => env('WA_GATEWAY_URL', 'http://localhost:3000/api/send'),
+        'url' => env('WA_GATEWAY_URL', 'http://127.0.0.1:3000/send-message'),
     ],
 
     'google' => [

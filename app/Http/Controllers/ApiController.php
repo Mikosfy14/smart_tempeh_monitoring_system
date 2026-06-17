@@ -141,6 +141,12 @@ class ApiController extends Controller
 
         // --- DHT22: Suhu (internal_temp dari DS18B20) ---
         if ($request->internal_temp > $tempThreshold) {
+            Log::info('ApiController: Threshold SUHU terlampaui', [
+                'value'     => $request->internal_temp,
+                'threshold' => $tempThreshold,
+                'has_user'  => !!$user,
+                'has_wa'    => !!($user?->whatsapp_number),
+            ]);
             // AUTO mode: kipas otomatis menyala saat suhu melebihi threshold
             if ($device->operation_mode === 'AUTO' && $device->fan_status === 'OFF') {
                 $device->update(['fan_status' => 'ON']);
@@ -149,6 +155,8 @@ class ApiController extends Controller
             if ($user && $user->whatsapp_number) {
                 $sent = $this->whatsApp->sendAlert($user, $device, 'temp', $request->internal_temp);
                 if ($sent) $alertsSent[] = 'temp';
+            } else {
+                Log::warning('ApiController: Alert suhu dilewati — user atau WA number tidak ada');
             }
         } else {
             // Suhu kembali normal → matikan kipas (jika AUTO)
@@ -164,10 +172,18 @@ class ApiController extends Controller
 
         // --- MQ-135: Gas Amonia ---
         if ($request->amonia_level > $amoniaThreshold) {
+            Log::info('ApiController: Threshold AMONIA terlampaui', [
+                'value'     => $request->amonia_level,
+                'threshold' => $amoniaThreshold,
+                'has_user'  => !!$user,
+                'has_wa'    => !!($user?->whatsapp_number),
+            ]);
             // Amonia melebihi threshold → kirim alert ke user
             if ($user && $user->whatsapp_number) {
                 $sent = $this->whatsApp->sendAlert($user, $device, 'amonia', $request->amonia_level);
                 if ($sent) $alertsSent[] = 'amonia';
+            } else {
+                Log::warning('ApiController: Alert amonia dilewati — user atau WA number tidak ada');
             }
         } else {
             // Amonia kembali normal

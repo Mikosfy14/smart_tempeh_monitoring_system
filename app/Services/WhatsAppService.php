@@ -22,6 +22,12 @@ class WhatsAppService
     public function sendAlert(User $user, Device $device, string $alertType, float $value): bool
     {
         if (!$user->whatsapp_number) {
+            Log::warning('WhatsApp: User tidak memiliki whatsapp_number', [
+                'user_id'   => $user->id,
+                'user_name' => $user->name,
+                'device_id' => $device->device_id,
+                'alertType' => $alertType,
+            ]);
             return false;
         }
 
@@ -39,6 +45,13 @@ class WhatsAppService
         $label = $device->label_rak ?? $device->device_name ?? $device->device_id;
         $message = $this->buildAlertMessage($alertType, $label, $device->device_id, $value);
 
+        Log::info('WhatsApp: Mengirim alert', [
+            'phone'     => $user->whatsapp_number,
+            'device_id' => $device->device_id,
+            'type'      => $alertType,
+            'value'     => $value,
+        ]);
+
         $sent = $this->sendMessage($user->whatsapp_number, $message);
 
         if ($sent) {
@@ -46,6 +59,16 @@ class WhatsAppService
             Cache::put($cooldownKey, true, $this->cooldownSeconds);
             // Mark alert as active for recovery notification
             Cache::put("alert_active_{$device->id}_{$alertType}", true, 86400); // 24h max
+            Log::info('WhatsApp: Alert berhasil terkirim', [
+                'phone'     => $user->whatsapp_number,
+                'type'      => $alertType,
+            ]);
+        } else {
+            Log::error('WhatsApp: Alert GAGAL terkirim', [
+                'phone'     => $user->whatsapp_number,
+                'type'      => $alertType,
+                'device_id' => $device->device_id,
+            ]);
         }
 
         return $sent;
@@ -71,10 +94,15 @@ class WhatsAppService
         $label = $device->label_rak ?? $device->device_name ?? $device->device_id;
         $message = $this->buildRecoveryMessage($alertType, $label, $device->device_id, $value);
 
+        Log::info('WhatsApp: Mengirim recovery notification', [
+            'phone'     => $user->whatsapp_number,
+            'type'      => $alertType,
+            'device_id' => $device->device_id,
+        ]);
+
         $sent = $this->sendMessage($user->whatsapp_number, $message);
 
         if ($sent) {
-            // Clear active alert and cooldown
             Cache::forget($activeKey);
             Cache::forget("wa_alert_{$device->id}_{$alertType}");
         }
@@ -88,6 +116,9 @@ class WhatsAppService
     public function sendOfflineAlert(User $user, Device $device): bool
     {
         if (!$user->whatsapp_number) {
+            Log::warning('WhatsApp: Offline alert dilewati — user tidak punya WA number', [
+                'user_id' => $user->id,
+            ]);
             return false;
         }
 
@@ -100,6 +131,11 @@ class WhatsAppService
             . ":information_source: Alat tidak mengirim data selama lebih dari 5 menit.\n"
             . "Periksa koneksi internet dan sumber daya alat Anda.\n\n"
             . "Waktu terdeteksi: {$timestamp}";
+
+        Log::info('WhatsApp: Mengirim offline alert', [
+            'phone'     => $user->whatsapp_number,
+            'device_id' => $device->device_id,
+        ]);
 
         return $this->sendMessage($user->whatsapp_number, $message);
     }
@@ -194,36 +230,63 @@ class WhatsAppService
      * Low-level: send a WhatsApp message via local Node.js WA Gateway
      * (whatsapp-web.js running on the same VPS).
      *
-     * Gateway URL is configurable via WA_GATEWAY_URL env variable.
+     * Gateway URL dikonfigurasi via WA_GATEWAY_URL env variable.
      * Default: http://localhost:3000/api/send
+     *
+     * Pastikan Node.js gateway SUDAH running sebelum Laravel mengirim.
+     * Cek dengan: curl http://localhost:3000/api/send
      */
     public function sendMessage(string $phone, string $message): bool
     {
-        $gatewayUrl = config('services.wa_gateway.url', 'http://localhost:3000/api/send');
+        $gatewayUrl = config('services.wa_gateway.url', 'http://127.0.0.1:3000/send-message');
 
-        if (empty($gatewayUrl)) {
-            Log::warning('WhatsApp: WA Gateway URL is not configured.');
-            return false;
-        }
+        Log::info('WhatsApp: Mencoba kirim via Node.js gateway', [
+            'phone'   => $phone,
+            'gateway' => $gatewayUrl,
+        ]);
 
         try {
             $response = Http::timeout(10)->post($gatewayUrl, [
-                'phone'   => $phone,
+                'number'  => $phone,  // Field 'number' sesuai format gateway Node.js
                 'message' => $message,
             ]);
 
-            Log::info('WhatsApp message sent via local gateway', [
-                'phone'    => $phone,
-                'gateway'  => $gatewayUrl,
-                'response' => $response->json(),
+            Log::info('WhatsApp: Response dari gateway', [
+                'phone'       => $phone,
+                'gateway'     => $gatewayUrl,
+                'http_status' => $response->status(),
+                'body'        => $response->body(),
             ]);
 
-            return $response->successful();
-        } catch (\Exception $e) {
-            Log::error('WhatsApp message failed via local gateway', [
+            if ($response->successful()) {
+                Log::info('WhatsApp: ✅ Terkirim via Node.js gateway', [
+                    'phone' => $phone,
+                ]);
+                return true;
+            }
+
+            // Gateway merespons tapi bukan 2xx
+            Log::error('WhatsApp: ❌ Gateway merespons error', [
+                'phone'       => $phone,
+                'http_status' => $response->status(),
+                'body'        => $response->body(),
+            ]);
+            return false;
+
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error('WhatsApp: ❌ Gateway tidak dapat dihubungi (connection refused)', [
                 'phone'   => $phone,
                 'gateway' => $gatewayUrl,
                 'error'   => $e->getMessage(),
+                'hint'    => 'Pastikan Node.js WA gateway sudah running di VPS!',
+            ]);
+            return false;
+        } catch (\Exception $e) {
+            Log::error('WhatsApp: ❌ Exception saat mengirim', [
+                'phone'   => $phone,
+                'gateway' => $gatewayUrl,
+                'error'   => $e->getMessage(),
+                'class'   => get_class($e),
             ]);
             return false;
         }
