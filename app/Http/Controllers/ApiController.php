@@ -23,7 +23,20 @@ class ApiController extends Controller
 
     /**
      * POST /api/telemetry
-     * ESP32 sends sensor data. Includes dynamic threshold check + WhatsApp alert with cooldown.
+     *
+     * Endpoint utama untuk menerima data sensor dari ESP32.
+     *
+     * Alur kerja dinamis:
+     * 1. Validasi API Key dari header X-API-Key
+     * 2. Baca device_id dari payload ESP32
+     * 3. Cari Device di database, tarik data User (pemilik) via relasi Eloquent
+     * 4. Simpan data sensor (MQ-135 amonia, DHT22 suhu+kelembaban, DS18B20 suhu internal)
+     * 5. Jalankan expert system prediksi (jika ada batch aktif)
+     * 6. Cek threshold dinamis per-device:
+     *    - MQ-135 Amonia vs amonia_threshold milik user
+     *    - DHT22 Suhu vs temp_threshold milik user
+     *    - DHT22 Kelembaban vs humidity_threshold milik user
+     * 7. Kirim WhatsApp alert ke nomor WA user jika threshold terlampaui
      */
     public function telemetry(Request $request)
     {
@@ -50,9 +63,11 @@ class ApiController extends Controller
             'humidity'      => 'required|numeric',
         ]);
 
-        // Find the device by its hardware ID
+        // ================================================
+        // STEP 1: Baca device_id, cari Device & User pemilik
+        // ================================================
         $device = Device::where('device_id', $request->device_id)
-            ->with('user')
+            ->with('user')  // Eager-load relasi: Device → User (pemilik)
             ->first();
 
         if (!$device) {
@@ -62,8 +77,18 @@ class ApiController extends Controller
             ], 404);
         }
 
+        // Tarik data User (pemilik device) secara dinamis dari database
+        $user = $device->user;
+
+        Log::info('ApiController: Telemetry diterima', [
+            'device_id' => $device->device_id,
+            'user_id'   => $user?->id ?? 'unassigned',
+            'user_name' => $user?->name ?? 'N/A',
+            'wa_number' => $user?->whatsapp_number ?? 'N/A',
+        ]);
+
         // ================================================
-        // BATCH INTEGRATION — Direct query (bukan eager-load)
+        // STEP 2: Cari batch aktif untuk device ini
         // ================================================
         $activeBatch = FermentationBatch::where('device_id', $device->id)
             ->whereIn('status', ['active', 'semangit'])
@@ -73,7 +98,7 @@ class ApiController extends Controller
         // Simpan sensor log, sertakan batch_id jika ada batch yang sedang berjalan
         $newLog = SensorLog::create([
             'device_id'     => $device->id,
-            'batch_id'      => $activeBatch?->id, // null jika tidak ada batch aktif
+            'batch_id'      => $activeBatch?->id,
             'internal_temp' => $request->internal_temp,
             'amonia_level'  => $request->amonia_level,
             'room_temp'     => $request->room_temp,
@@ -88,15 +113,13 @@ class ApiController extends Controller
         ]);
 
         // ================================================
-        // PREDICTIVE ANALYSIS — Jalankan expert system
+        // STEP 3: Jalankan expert system prediksi
         // ================================================
         if ($activeBatch) {
             try {
                 $this->predictor->analyze($activeBatch, $newLog);
-                // Refresh batch untuk mendapatkan status terbaru setelah analisis
                 $activeBatch->refresh();
             } catch (\Exception $e) {
-                // Jangan biarkan error analisis menghentikan respons ke ESP32
                 Log::error('BatchPredictor: Exception saat analisis', [
                     'batch_id' => $activeBatch->id,
                     'error'    => $e->getMessage(),
@@ -106,69 +129,72 @@ class ApiController extends Controller
         }
 
         // ================================================
-        // THRESHOLD CHECKS — Dynamic per-device thresholds
+        // STEP 4: Threshold Checks — Dinamis per-device
         // ================================================
+        // Threshold dibaca dari device (bukan hardcode), sehingga
+        // setiap user bisa mengatur batas sesuai kebutuhannya.
         $alertsSent = [];
-        $user = $device->user;
 
         $tempThreshold     = $device->temp_threshold ?? 35.0;
         $amoniaThreshold   = $device->amonia_threshold ?? 25.0;
         $humidityThreshold = $device->humidity_threshold ?? 90.0;
 
-        // --- Temperature threshold ---
+        // --- DHT22: Suhu (internal_temp dari DS18B20) ---
         if ($request->internal_temp > $tempThreshold) {
-            // AUTO mode: activate fan automatically
+            // AUTO mode: kipas otomatis menyala saat suhu melebihi threshold
             if ($device->operation_mode === 'AUTO' && $device->fan_status === 'OFF') {
                 $device->update(['fan_status' => 'ON']);
             }
-            // Send alert (with cooldown)
-            if ($user) {
+            // Kirim WhatsApp alert ke nomor WA user (dinamis dari DB)
+            if ($user && $user->whatsapp_number) {
                 $sent = $this->whatsApp->sendAlert($user, $device, 'temp', $request->internal_temp);
                 if ($sent) $alertsSent[] = 'temp';
             }
         } else {
-            // Temperature back to normal
+            // Suhu kembali normal → matikan kipas (jika AUTO)
             if ($device->operation_mode === 'AUTO' && $device->fan_status === 'ON') {
                 $device->update(['fan_status' => 'OFF']);
             }
-            // Recovery notification
-            if ($user) {
+            // Kirim notifikasi recovery ke user
+            if ($user && $user->whatsapp_number) {
                 $recovered = $this->whatsApp->sendRecoveryNotification($user, $device, 'temp', $request->internal_temp);
                 if ($recovered) $alertsSent[] = 'temp_recovery';
             }
         }
 
-        // --- Ammonia threshold ---
+        // --- MQ-135: Gas Amonia ---
         if ($request->amonia_level > $amoniaThreshold) {
-            if ($user) {
+            // Amonia melebihi threshold → kirim alert ke user
+            if ($user && $user->whatsapp_number) {
                 $sent = $this->whatsApp->sendAlert($user, $device, 'amonia', $request->amonia_level);
                 if ($sent) $alertsSent[] = 'amonia';
             }
         } else {
-            if ($user) {
+            // Amonia kembali normal
+            if ($user && $user->whatsapp_number) {
                 $recovered = $this->whatsApp->sendRecoveryNotification($user, $device, 'amonia', $request->amonia_level);
                 if ($recovered) $alertsSent[] = 'amonia_recovery';
             }
         }
 
-        // --- Humidity threshold ---
+        // --- DHT22: Kelembaban ---
         if ($request->humidity > $humidityThreshold) {
-            if ($user) {
+            if ($user && $user->whatsapp_number) {
                 $sent = $this->whatsApp->sendAlert($user, $device, 'humidity', $request->humidity);
                 if ($sent) $alertsSent[] = 'humidity';
             }
         } else {
-            if ($user) {
+            if ($user && $user->whatsapp_number) {
                 $recovered = $this->whatsApp->sendRecoveryNotification($user, $device, 'humidity', $request->humidity);
                 if ($recovered) $alertsSent[] = 'humidity_recovery';
             }
         }
 
-        // Refresh device to get latest fan_status after possible updates
+        // Refresh device untuk mendapatkan fan_status terbaru
         $device->refresh();
 
         // ================================================
-        // Consistent JSON response for ESP32
+        // Response untuk ESP32
         // ================================================
         return response()->json([
             'status'           => 'success',

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard — Smart Tempeh Monitoring')
+@section('title', 'Dashboard — Rizhomatix')
 
 @section('content')
 <div class="stagger-children">

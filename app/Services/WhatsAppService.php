@@ -191,35 +191,39 @@ class WhatsAppService
     }
 
     /**
-     * Low-level: send a WhatsApp message via Fonnte API.
+     * Low-level: send a WhatsApp message via local Node.js WA Gateway
+     * (whatsapp-web.js running on the same VPS).
+     *
+     * Gateway URL is configurable via WA_GATEWAY_URL env variable.
+     * Default: http://localhost:3000/api/send
      */
     public function sendMessage(string $phone, string $message): bool
     {
-        $token = config('services.fonnte.token', '');
+        $gatewayUrl = config('services.wa_gateway.url', 'http://localhost:3000/api/send');
 
-        if (empty($token)) {
-            Log::warning('WhatsApp: Fonnte API token is not configured.');
+        if (empty($gatewayUrl)) {
+            Log::warning('WhatsApp: WA Gateway URL is not configured.');
             return false;
         }
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => $token,
-            ])->post('https://api.fonnte.com/send', [
-                'target'  => $phone,
+            $response = Http::timeout(10)->post($gatewayUrl, [
+                'phone'   => $phone,
                 'message' => $message,
             ]);
 
-            Log::info('WhatsApp message sent', [
+            Log::info('WhatsApp message sent via local gateway', [
                 'phone'    => $phone,
+                'gateway'  => $gatewayUrl,
                 'response' => $response->json(),
             ]);
 
             return $response->successful();
         } catch (\Exception $e) {
-            Log::error('WhatsApp message failed', [
-                'phone' => $phone,
-                'error' => $e->getMessage(),
+            Log::error('WhatsApp message failed via local gateway', [
+                'phone'   => $phone,
+                'gateway' => $gatewayUrl,
+                'error'   => $e->getMessage(),
             ]);
             return false;
         }

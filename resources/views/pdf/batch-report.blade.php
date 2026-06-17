@@ -134,7 +134,7 @@
 
     {{-- Footer --}}
     <div class="footer">
-        Smart Tempeh Monitoring System &mdash; Laporan otomatis riwayat produksi &mdash; {{ now()->format('Y') }}
+        Rizhomatix System &mdash; Laporan otomatis riwayat produksi &mdash; {{ now()->format('Y') }}
     </div>
 </body>
 </html>

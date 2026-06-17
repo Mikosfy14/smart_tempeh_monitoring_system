@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Device Whitelist — Smart Tempeh Monitoring')
+@section('title', 'Device Whitelist — Rizhomatix')
 @section('page-title', 'Device Whitelist')
 
 @section('content')

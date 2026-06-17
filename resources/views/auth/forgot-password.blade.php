@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Lupa Password — Smart Tempeh Monitoring')
+@section('title', 'Lupa Password — Rizhomatix')
 
 @section('content')
 <div class="flex items-center justify-center min-h-screen">

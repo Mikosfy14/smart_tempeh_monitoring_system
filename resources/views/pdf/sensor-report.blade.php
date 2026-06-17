@@ -37,7 +37,7 @@
 <body>
     {{-- Header --}}
     <div class="header">
-        <h1>📊 Laporan Sensor — Smart Tempeh Monitoring</h1>
+        <h1>📊 Laporan Sensor — Rizhomatix</h1>
         <p>Digenerate pada {{ now()->format('d M Y H:i:s') }}</p>
     </div>
 
@@ -128,7 +128,7 @@
 
     {{-- Footer --}}
     <div class="footer">
-        Smart Tempeh Monitoring System &mdash; Laporan otomatis &mdash; {{ now()->format('Y') }}
+        Rizhomatix System &mdash; Laporan otomatis &mdash; {{ now()->format('Y') }}
     </div>
 </body>
 </html>

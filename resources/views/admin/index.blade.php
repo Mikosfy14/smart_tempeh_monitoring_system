@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Admin Overview — Smart Tempeh Monitoring')
+@section('title', 'Admin Overview — Rizhomatix')
 @section('page-title', 'Overview')
 
 @section('content')

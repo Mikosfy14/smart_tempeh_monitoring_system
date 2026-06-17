@@ -39,6 +39,10 @@ return [
         'token' => env('FONNTE_TOKEN', ''),
     ],
 
+    'wa_gateway' => [
+        'url' => env('WA_GATEWAY_URL', 'http://localhost:3000/api/send'),
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

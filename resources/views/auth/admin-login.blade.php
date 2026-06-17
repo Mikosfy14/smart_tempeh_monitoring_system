@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Admin Login — Smart Tempeh Monitoring')
+@section('title', 'Admin Login — Rizhomatix')
 
 @section('content')
 <div class="flex items-center justify-center min-h-screen">
@@ -13,7 +13,7 @@
                 </svg>
             </div>
             <h1 class="text-2xl font-bold">Admin Panel</h1>
-            <p class="mt-1 text-sm" style="color: var(--color-text-secondary);">Smart Tempeh Monitoring — Administrator</p>
+            <p class="mt-1 text-sm" style="color: var(--color-text-secondary);">Rizhomatix — Administrator</p>
         </div>
 
         {{-- Error Messages --}}

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Profile — Smart Tempeh Monitoring')
+@section('title', 'Edit Profile — Rizhomatix')
 
 @section('content')
 <div class="stagger-children" style="max-width: 720px; margin: 0 auto;">
