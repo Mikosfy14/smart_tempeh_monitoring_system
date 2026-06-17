@@ -9,12 +9,26 @@
     {{-- Header --}}
     <div class="flex items-center justify-between mb-6">
         <p class="text-sm" style="color: var(--color-text-secondary);">Browse and filter all sensor telemetry data</p>
-        <button class="btn btn-danger btn-sm" onclick="openModal('purge-modal')" id="btn-purge-logs">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Purge > 30 Hari
-        </button>
+        <div class="flex gap-2">
+            <button class="btn btn-danger btn-sm" onclick="openModal('delete-selected-modal')" id="btn-delete-selected" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Hapus Terpilih (<span id="selected-count">0</span>)
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="openModal('delete-all-modal')" id="btn-delete-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Hapus Semua
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="openModal('purge-modal')" id="btn-purge-logs">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Purge > 30 Hari
+            </button>
+        </div>
     </div>
 
     {{-- Filter Bar --}}
@@ -74,6 +88,9 @@
         <table class="data-table table-logs">
             <thead>
                 <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" id="select-all" title="Pilih semua di halaman ini">
+                    </th>
                     <th>#</th>
                     <th>Waktu</th>
                     <th>Device ID</th>
@@ -88,6 +105,9 @@
             <tbody>
                 @forelse($logs as $i => $log)
                 <tr>
+                    <td>
+                        <input type="checkbox" class="log-checkbox" value="{{ $log->id }}">
+                    </td>
                     <td style="color: var(--color-text-muted);">{{ $logs->firstItem() + $i }}</td>
                     <td style="color: var(--color-text-secondary); white-space: nowrap;">{{ $log->created_at->format('d/m/Y H:i:s') }}</td>
                     <td><code class="text-xs px-2 py-1 rounded" style="background: var(--color-bg-primary); color: var(--color-accent-teal);">{{ $log->device->device_id ?? '—' }}</code></td>
@@ -100,7 +120,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" class="text-center py-8" style="color: var(--color-text-muted);">Tidak ada log sensor ditemukan.</td>
+                    <td colspan="10" class="text-center py-8" style="color: var(--color-text-muted);">Tidak ada log sensor ditemukan.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -154,10 +174,47 @@
         </div>
     </div>
 </div>
+
+{{-- DELETE SELECTED MODAL --}}
+<div class="modal-overlay" id="delete-selected-modal">
+    <div class="modal-content text-center">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4" style="background: rgba(248, 113, 113, 0.1);">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" style="color: var(--color-accent-red);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2">Hapus Log Terpilih</h3>
+        <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Hapus <strong class="text-white" id="delete-selected-count">0</strong> log sensor yang dipilih? Aksi ini tidak bisa di-undo.</p>
+        <div class="flex gap-3">
+            <button class="btn btn-secondary flex-1" onclick="closeModal('delete-selected-modal')">Batal</button>
+            <button class="btn btn-danger flex-1" onclick="confirmDeleteSelected()" id="btn-confirm-delete-selected">Hapus Terpilih</button>
+        </div>
+    </div>
+</div>
+
+{{-- DELETE ALL MODAL --}}
+<div class="modal-overlay" id="delete-all-modal">
+    <div class="modal-content text-center">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4" style="background: rgba(248, 113, 113, 0.1);">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" style="color: var(--color-accent-red);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2">Hapus Semua Log</h3>
+        <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Hapus <strong class="text-white">semua {{ $logs->total() }} log sensor</strong>? Aksi ini tidak bisa di-undo.</p>
+        <div class="flex gap-3">
+            <button class="btn btn-secondary flex-1" onclick="closeModal('delete-all-modal')">Batal</button>
+            <button class="btn btn-danger flex-1" onclick="confirmDeleteAll()" id="btn-confirm-delete-all">Hapus Semua</button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
+    // ============================================
+    // MODAL HELPERS
+    // ============================================
     function openModal(id) {
         document.getElementById(id).classList.add('active');
     }
@@ -166,6 +223,107 @@
         document.getElementById(id).classList.remove('active');
     }
 
+    // ============================================
+    // CHECKBOX LOGIC
+    // ============================================
+    const selectAllCheckbox = document.getElementById('select-all');
+    const logCheckboxes = document.querySelectorAll('.log-checkbox');
+    const btnDeleteSelected = document.getElementById('btn-delete-selected');
+    const selectedCountSpan = document.getElementById('selected-count');
+    const deleteSelectedCountEl = document.getElementById('delete-selected-count');
+
+    function getSelectedIds() {
+        return Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => parseInt(cb.value));
+    }
+
+    function updateDeleteSelectedButton() {
+        const count = getSelectedIds().length;
+        selectedCountSpan.textContent = count;
+        deleteSelectedCountEl.textContent = count;
+        btnDeleteSelected.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+
+    // Select all checkbox
+    selectAllCheckbox.addEventListener('change', function() {
+        logCheckboxes.forEach(cb => {
+            cb.checked = this.checked;
+        });
+        updateDeleteSelectedButton();
+    });
+
+    // Individual checkboxes
+    logCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            const allChecked = Array.from(logCheckboxes).every(c => c.checked);
+            const someChecked = Array.from(logCheckboxes).some(c => c.checked);
+            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+            updateDeleteSelectedButton();
+        });
+    });
+
+    // ============================================
+    // DELETE SELECTED
+    // ============================================
+    async function confirmDeleteSelected() {
+        const ids = getSelectedIds();
+        if (ids.length === 0) return;
+
+        const btn = document.getElementById('btn-confirm-delete-selected');
+        btn.disabled = true;
+        btn.textContent = 'Menghapus...';
+
+        try {
+            const res = await fetch('{{ route("admin.sensor-logs.delete-selected") }}', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': window.csrfToken,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ ids: ids })
+            });
+            const data = await res.json();
+            closeModal('delete-selected-modal');
+            alert(data.message || 'Berhasil.');
+            location.reload();
+        } catch (err) {
+            alert('Gagal menghapus log terpilih.');
+            btn.disabled = false;
+            btn.textContent = 'Hapus Terpilih';
+        }
+    }
+
+    // ============================================
+    // DELETE ALL
+    // ============================================
+    async function confirmDeleteAll() {
+        const btn = document.getElementById('btn-confirm-delete-all');
+        btn.disabled = true;
+        btn.textContent = 'Menghapus...';
+
+        try {
+            const res = await fetch('{{ route("admin.sensor-logs.delete-all") }}', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': window.csrfToken,
+                    'Accept': 'application/json'
+                }
+            });
+            const data = await res.json();
+            closeModal('delete-all-modal');
+            alert(data.message || 'Berhasil.');
+            location.reload();
+        } catch (err) {
+            alert('Gagal menghapus semua log.');
+            btn.disabled = false;
+            btn.textContent = 'Hapus Semua';
+        }
+    }
+
+    // ============================================
+    // PURGE (existing)
+    // ============================================
     async function confirmPurge() {
         const btn = document.getElementById('btn-confirm-purge');
         btn.disabled = true;

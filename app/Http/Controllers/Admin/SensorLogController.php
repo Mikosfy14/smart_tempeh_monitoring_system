@@ -73,4 +73,64 @@ class SensorLogController extends Controller
 
         return redirect()->route('admin.sensor-logs')->with('success', $message);
     }
+
+    /**
+     * Delete selected sensor logs by IDs (bulk delete via checkbox).
+     */
+    public function deleteSelected(Request $request)
+    {
+        $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer|exists:sensor_logs,id',
+        ]);
+
+        $deleted = SensorLog::whereIn('id', $request->ids)->delete();
+
+        $message = "Berhasil menghapus {$deleted} log sensor yang dipilih.";
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'deleted' => $deleted,
+            ]);
+        }
+
+        return redirect()->route('admin.sensor-logs')->with('success', $message);
+    }
+
+    /**
+     * Delete all sensor logs (optionally filtered by device/date).
+     */
+    public function deleteAll(Request $request)
+    {
+        $query = SensorLog::query();
+
+        // Optional: filter by device before deleting
+        if ($request->filled('device_id')) {
+            $query->where('device_id', $request->device_id);
+        }
+
+        // Optional: filter by date range before deleting
+        if ($request->filled('date_from')) {
+            $query->where('created_at', '>=', $request->date_from . ' 00:00:00');
+        }
+        if ($request->filled('date_to')) {
+            $query->where('created_at', '<=', $request->date_to . ' 23:59:59');
+        }
+
+        $deleted = $query->delete();
+
+        $message = "Berhasil menghapus {$deleted} log sensor.";
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'deleted' => $deleted,
+            ]);
+        }
+
+        return redirect()->route('admin.sensor-logs')->with('success', $message);
+    }
 }

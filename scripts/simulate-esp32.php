@@ -36,34 +36,33 @@ $API_KEY = 'mikosfy-esp32-secret-2024';
 // Device ID yang terdaftar di master_devices
 $DEVICE_ID = 'TEMPE-001';
 
-// Interval pengiriman data dalam detik
-// 5 detik = grafik update cepat, cocok untuk demo video
+// Interval pengiriman data dalam detik (default, bisa di-override per fase)
 $INTERVAL_SECONDS = 5;
 
 // Jeda antar fase dalam detik (untuk memberi waktu expert system memproses)
 $PHASE_PAUSE_SECONDS = 3;
 
 // ============================================================================
-//  SKENARIO ALERT DEMO
+//  SKENARIO ALERT DEMO — Target 5-6 menit
 // ============================================================================
 //
-//  FASE  1: Normal           (30 data × 5s = 2.5 menit)
+//  FASE  1: Normal           (20 data × 5s = 1m 40s)
 //           Suhu 30-33°C, amonia 5-15 ppm, humidity 70-80%
 //           → Dashboard menampilkan grafik stabil, kipas OFF
 //
-//  FASE  2: Suhu Naik        (24 data × 5s = 2 menit)
+//  FASE  2: Suhu Naik        (16 data × 4s = 1m 04s)
 //           Suhu 34→38°C, amonia 15-30 ppm
 //           → Alert WhatsApp suhu tinggi, kipas AUTO ON
 //
-//  FASE  3: SEMANGIT         (24 data × 5s = 2 menit)
+//  FASE  3: SEMANGIT         (16 data × 4s = 1m 04s)
 //           Suhu 37-39°C, amonia 60→130 ppm
 //           → Expert system trigger SEMANGIT, WhatsApp alert batch
 //
-//  FASE  4: FAILED           (12 data × 5s = 1 menit)
+//  FASE  4: FAILED           (10 data × 3s = 30s)
 //           Amonia 180→280 ppm, suhu masih tinggi
 //           → Expert system trigger FAILED, WhatsApp alert batch
 //
-//  Total: ~8 menit untuk demo video yang fokus dan cepat
+//  Total: ~5 menit 25 detik (termasuk jeda antar fase)
 //
 //  ============================================================================
 
@@ -176,12 +175,14 @@ function fmtSensor(float $val, int $decimals = 1): string {
 function getScenario(): array {
     return [
         // ── FASE 1: Normal ──────────────────────────────────────────────
+        // 20 data × 5 detik = 1 menit 40 detik
         [
-            'name'   => 'NORMAL',
-            'color'  => 'green',
-            'icon'   => '🟢',
-            'count'  => 30,
-            'gen'    => function(int $i) {
+            'name'     => 'NORMAL',
+            'color'    => 'green',
+            'icon'     => '🟢',
+            'count'    => 20,
+            'interval' => 5, // detik
+            'gen'      => function(int $i) {
                 return [
                     'internal_temp' => noisy(31.5, 1.5),
                     'amonia_level'  => noisy(8.0, 4.0),
@@ -192,14 +193,15 @@ function getScenario(): array {
         ],
 
         // ── FASE 2: Suhu Naik (trigger threshold alert + fan ON) ────────
+        // 16 data × 4 detik = 1 menit 4 detik
         [
-            'name'   => 'SUHU NAIK',
-            'color'  => 'yellow',
-            'icon'   => '🟡',
-            'count'  => 24,
-            'gen'    => function(int $i) {
-                // Suhu naik gradual dari 34 ke 38
-                $progress = $i / 23; // 0 → 1
+            'name'     => 'SUHU NAIK',
+            'color'    => 'yellow',
+            'icon'     => '🟡',
+            'count'    => 16,
+            'interval' => 4, // detik (lebih cepat — fase menarik)
+            'gen'      => function(int $i) {
+                $progress = $i / 15; // 0 → 1
                 $temp = 34.0 + ($progress * 4.0);
                 return [
                     'internal_temp' => noisy($temp, 0.8),
@@ -214,13 +216,15 @@ function getScenario(): array {
         'pause' => 3,
 
         // ── FASE 3: SEMANGIT (amonia naik → trigger expert system) ──────
+        // 16 data × 4 detik = 1 menit 4 detik
         [
-            'name'   => 'SEMANGIT',
-            'color'  => 'yellow',
-            'icon'   => '⚠️',
-            'count'  => 24,
-            'gen'    => function(int $i) {
-                $progress = $i / 23;
+            'name'     => 'SEMANGIT',
+            'color'    => 'yellow',
+            'icon'     => '⚠️',
+            'count'    => 16,
+            'interval' => 4, // detik
+            'gen'      => function(int $i) {
+                $progress = $i / 15;
                 $amonia = 60.0 + ($progress * 70.0); // 60 → 130 ppm
                 $temp = 37.0 + ($progress * 2.0);    // 37 → 39°C
                 return [
@@ -236,13 +240,15 @@ function getScenario(): array {
         'pause' => 3,
 
         // ── FASE 4: FAILED (amonia kritis → trigger failed) ─────────────
+        // 10 data × 3 detik = 30 detik (cepat — klimaks)
         [
-            'name'   => 'FAILED',
-            'color'  => 'red',
-            'icon'   => '🔴',
-            'count'  => 12,
-            'gen'    => function(int $i) {
-                $progress = $i / 11;
+            'name'     => 'FAILED',
+            'color'    => 'red',
+            'icon'     => '🔴',
+            'count'    => 10,
+            'interval' => 3, // detik (paling cepat — klimaks demo)
+            'gen'      => function(int $i) {
+                $progress = $i / 9;
                 $amonia = 180.0 + ($progress * 100.0); // 180 → 280 ppm
                 return [
                     'internal_temp' => noisy(38.5, 1.0),
@@ -349,15 +355,17 @@ foreach ($scenario as $phase) {
     // Skip jika bukan array fase
     if (!is_array($phase) || !isset($phase['gen'])) continue;
 
-    $name  = $phase['name'];
-    $color = $phase['color'];
-    $icon  = $phase['icon'];
-    $count = $phase['count'];
+    $name     = $phase['name'];
+    $color    = $phase['color'];
+    $icon     = $phase['icon'];
+    $count    = $phase['count'];
+    $interval = $phase['interval'] ?? $INTERVAL_SECONDS; // Interval per-fase
 
     // Header fase
+    $phaseDur = sprintf("%dm %02ds", floor($count * $interval / 60), ($count * $interval) % 60);
     echo color("  ┌─────────────────────────────────────────────────────", $color) . "\n";
     echo color("  │  {$icon} FASE: {$name}", $color) . "\n";
-    echo color("  │  Mengirim {$count} data (setiap {$INTERVAL_SECONDS} detik)", $color) . "\n";
+    echo color("  │  Mengirim {$count} data (setiap {$interval} detik ≈ {$phaseDur})", $color) . "\n";
     echo color("  └─────────────────────────────────────────────────────", $color) . "\n";
     echo "\n";
 
@@ -423,7 +431,7 @@ foreach ($scenario as $phase) {
 
         // Jangan sleep di data terakhir
         if ($i < $count - 1) {
-            sleep($INTERVAL_SECONDS);
+            sleep($interval);
         }
     }
 
@@ -464,7 +472,7 @@ if (!empty($alertsLog)) {
 
 echo "\n";
 echo bold("  Fitur yang berhasil didemo:\n");
-echo "    ✓ Grafik real-time di dashboard (update per {$INTERVAL_SECONDS} detik)\n";
+echo "    ✓ Grafik real-time di dashboard (update per 3-5 detik)\n";
 echo "    ✓ Data sensor masuk ke database\n";
 if (!empty($alertsLog)) {
     echo "    ✓ Threshold alerts (WhatsApp notification)\n";

@@ -124,6 +124,8 @@ Route::middleware('admin')->prefix('stm-internal')->group(function () {
     // Sensor Logs Management
     Route::get('/sensor-logs', [SensorLogController::class, 'index'])->name('admin.sensor-logs');
     Route::delete('/sensor-logs/purge', [SensorLogController::class, 'purgeOldLogs'])->name('admin.sensor-logs.purge');
+    Route::delete('/sensor-logs/delete-selected', [SensorLogController::class, 'deleteSelected'])->name('admin.sensor-logs.delete-selected');
+    Route::delete('/sensor-logs/delete-all', [SensorLogController::class, 'deleteAll'])->name('admin.sensor-logs.delete-all');
 
     // Fermentation Batches Management
     Route::get('/batches', [\App\Http\Controllers\Admin\AdminBatchController::class, 'index'])->name('admin.batches');
