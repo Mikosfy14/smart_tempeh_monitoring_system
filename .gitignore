@@ -24,5 +24,4 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
-esp32_firmware/esp32_fan_controller/esp32_fan_controller.ino
 scripts/simulate-esp32.php
