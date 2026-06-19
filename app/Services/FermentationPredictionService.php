@@ -56,18 +56,18 @@ class FermentationPredictionService
 
     /**
      * Level gas amonia (ppm) sesaat yang memicu status semangit.
-     * Amonia normal saat fermentasi adalah 43-50 ppm.
+     * Amonia normal saat fermentasi adalah 0.1-1.0 ppm.
      * Amonia tinggi mengindikasikan proteolisis berlebih (tempe mulai busuk).
      */
-    protected float $semangitAmoniaInstant = 100.0;
+    protected float $semangitAmoniaInstant = 2.5;
 
     // --- Rule 2: Kondisi "Gagal/Busuk" (Kritis Merah) ---
 
     /**
      * Level gas amonia (ppm) yang mengindikasikan kegagalan total.
-     * Di atas 250 ppm → degradasi protein massif, tempe tidak layak.
+     * Di atas 5.0 ppm → degradasi protein massif, tempe tidak layak.
      */
-    protected float $failedAmoniaThreshold = 250.0;
+    protected float $failedAmoniaThreshold = 5.0;
 
     /**
      * Selisih suhu (°C): jika suhu internal DROP di bawah suhu ruangan sebesar

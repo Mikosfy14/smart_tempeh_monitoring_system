@@ -47,27 +47,27 @@ $PHASE_PAUSE_SECONDS = 3;
 // ============================================================================
 //
 //  FASE  1: NORMAL            (20 data × 2.5s = 50s)
-//           Suhu ~31°C, amonia ~8 ppm, humidity ~75%
+//           Suhu ~31°C, amonia ~0.3 ppm, humidity ~75%
 //           → Semua di bawah threshold, tidak ada alert
 //
 //  FASE  2: SUHU NAIK         (20 data × 2.5s = 50s)
-//           Suhu 31→37°C, amonia ~20 ppm
+//           Suhu 31→37°C, amonia ~1.5 ppm
 //           → Trigger: temp > 35°C → Fan AUTO ON + WA alert suhu
 //
 //  FASE  3: AMONIA NAIK       (10 data × 2.5s = 25s)
-//           Amonia 25→55 ppm, suhu ~37°C
-//           → Trigger: amonia > 25 ppm → WA alert amonia
+//           Amonia 1.0→2.0 ppm, suhu ~37°C
+//           → Trigger: amonia > 2.0 ppm → WA alert amonia
 //
 //  FASE  4: SEMANGIT           (15 data × 2.5s = 37.5s)
-//           Amonia 60→130 ppm, suhu ~38°C
-//           → Trigger: amonia > 100 ppm → Batch → semangit + WA alert
+//           Amonia 2.5→4.5 ppm, suhu ~38°C
+//           → Trigger: amonia > 2.5 ppm → Batch → semangit + WA alert
 //
 //  FASE  5: FAILED             (10 data × 2.5s = 25s)
-//           Amonia 200→280 ppm
-//           → Trigger: amonia > 250 ppm → Batch → failed + WA alert
+//           Amonia 5.0→10.0 ppm
+//           → Trigger: amonia > 5.0 ppm → Batch → failed + WA alert
 //
 //  FASE  6: KEMBALI NORMAL     (15 data × 2.5s = 37.5s)
-//           Suhu 37→31°C, amonia 200→10 ppm, humidity 80→72%
+//           Suhu 37→31°C, amonia 5.0→0.3 ppm, humidity 80→72%
 //           → Trigger: WA recovery notification "kembali normal"
 //
 //  Total: ~4 menit (tekan Enter di setiap pergantian fase)
@@ -153,7 +153,7 @@ function checkActiveBatch(string $apiUrl, string $apiKey, string $deviceId): boo
     $data = [
         'device_id'     => $deviceId,
         'internal_temp' => 30.0,
-        'amonia_level'  => 5.0,
+        'amonia_level'  => 0.3,
         'room_temp'     => 28.0,
         'humidity'      => 70.0,
     ];
@@ -198,7 +198,7 @@ function getScenario(): array {
             'gen'      => function(int $i) {
                 return [
                     'internal_temp' => noisy(31.5, 1.5),   // < 35°C (threshold)
-                    'amonia_level'  => noisy(8.0, 4.0),    // < 25 ppm (threshold)
+                    'amonia_level'  => noisy(0.3, 0.2),    // < 2.0 ppm (threshold)
                     'room_temp'     => noisy(28.0, 1.0),
                     'humidity'      => noisy(75.0, 5.0),    // < 90% (threshold)
                 ];
@@ -224,7 +224,7 @@ function getScenario(): array {
                 $temp = 31.5 + ($progress * 5.5); // 31.5 → 37°C (lewati 35°C)
                 return [
                     'internal_temp' => noisy($temp, 0.5),
-                    'amonia_level'  => noisy(18.0, 6.0),   // masih < 25 ppm
+                    'amonia_level'  => noisy(1.5, 0.5),    // masih < 2.0 ppm
                     'room_temp'     => noisy(28.5, 0.5),
                     'humidity'      => noisy(76.0, 3.0),
                 ];
@@ -240,17 +240,17 @@ function getScenario(): array {
         // 10 data × 2.5 detik = 25 detik
         [
             'name'     => 'AMONIA NAIK',
-            'desc'     => 'Amonia melewati 25 ppm → WhatsApp alert amonia.',
+            'desc'     => 'Amonia melewati 2.0 ppm → WhatsApp alert amonia.',
             'color'    => 'amber',
             'icon'     => '💨',
             'count'    => 10,
             'interval' => 2.5,
             'gen'      => function(int $i) {
                 $progress = $i / 9;
-                $amonia = 18.0 + ($progress * 37.0); // 18 → 55 ppm (lewati 25 ppm)
+                $amonia = 1.0 + ($progress * 1.0); // 1.0 → 2.0 ppm (lewati 2.0 ppm)
                 return [
                     'internal_temp' => noisy(37.0, 0.5),    // suhu tetap tinggi
-                    'amonia_level'  => noisy($amonia, 3.0),
+                    'amonia_level'  => noisy($amonia, 0.1),
                     'room_temp'     => noisy(28.5, 0.5),
                     'humidity'      => noisy(77.0, 2.0),
                 ];
@@ -268,17 +268,17 @@ function getScenario(): array {
         // 15 data × 2.5 detik = 37.5 detik
         [
             'name'     => 'SEMANGIT',
-            'desc'     => 'Amonia > 100 ppm → Expert system trigger SEMANGIT + WhatsApp batch alert.',
+            'desc'     => 'Amonia > 2.5 ppm → Expert system trigger SEMANGIT + WhatsApp batch alert.',
             'color'    => 'yellow',
             'icon'     => '⚠️',
             'count'    => 15,
             'interval' => 2.5,
             'gen'      => function(int $i) {
                 $progress = $i / 14;
-                $amonia = 60.0 + ($progress * 70.0); // 60 → 130 ppm (lewati 100 ppm)
+                $amonia = 2.5 + ($progress * 2.0); // 2.5 → 4.5 ppm (lewati 2.5 ppm)
                 return [
                     'internal_temp' => noisy(37.5, 0.8),    // avg > 36.5°C juga
-                    'amonia_level'  => noisy($amonia, 5.0),
+                    'amonia_level'  => noisy($amonia, 0.3),
                     'room_temp'     => noisy(29.0, 0.5),
                     'humidity'      => noisy(78.0, 2.0),
                 ];
@@ -288,24 +288,24 @@ function getScenario(): array {
         // ════════════════════════════════════════════════════════════════
         // FASE 5: FAILED — Trigger FermentationPredictionService Rule 2
         // ════════════════════════════════════════════════════════════════
-        // Amonia sesaat > 250 ppm (failedAmoniaThreshold).
+        // Amonia sesaat > 5.0 ppm (failedAmoniaThreshold).
         // → FermentationPredictionService: checkRuleFailed() = true
         // → Batch status: semangit → failed
         // → WhatsAppService: sendBatchTransitionNotification('failed')
         // 10 data × 2.5 detik = 25 detik
         [
             'name'     => 'FAILED',
-            'desc'     => 'Amonia > 250 ppm → Expert system trigger FAILED + WhatsApp batch alert.',
+            'desc'     => 'Amonia > 5.0 ppm → Expert system trigger FAILED + WhatsApp batch alert.',
             'color'    => 'red',
             'icon'     => '🔴',
             'count'    => 10,
             'interval' => 2.5,
             'gen'      => function(int $i) {
                 $progress = $i / 9;
-                $amonia = 200.0 + ($progress * 80.0); // 200 → 280 ppm (lewati 250 ppm)
+                $amonia = 5.0 + ($progress * 5.0); // 5.0 → 10.0 ppm (lewati 5.0 ppm)
                 return [
                     'internal_temp' => noisy(38.0, 1.0),
-                    'amonia_level'  => noisy($amonia, 8.0),
+                    'amonia_level'  => noisy($amonia, 0.5),
                     'room_temp'     => noisy(29.0, 0.5),
                     'humidity'      => noisy(80.0, 2.0),
                 ];
@@ -331,11 +331,11 @@ function getScenario(): array {
             'gen'      => function(int $i) {
                 $progress = $i / 14; // 0 → 1
                 $temp = 37.0 - ($progress * 6.0);   // 37 → 31°C (kembali normal)
-                $amonia = 200.0 - ($progress * 190.0); // 200 → 10 ppm (kembali normal)
+                $amonia = 5.0 - ($progress * 4.7);   // 5.0 → 0.3 ppm (kembali normal)
                 $humidity = 80.0 - ($progress * 8.0);  // 80 → 72% (kembali normal)
                 return [
                     'internal_temp' => noisy($temp, 0.8),
-                    'amonia_level'  => noisy($amonia, 5.0),
+                    'amonia_level'  => noisy($amonia, 0.2),
                     'room_temp'     => noisy(28.0, 0.5),
                     'humidity'      => noisy($humidity, 2.0),
                 ];

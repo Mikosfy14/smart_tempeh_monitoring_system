@@ -136,7 +136,7 @@ class ApiController extends Controller
         $alertsSent = [];
 
         $tempThreshold     = $device->temp_threshold ?? 35.0;
-        $amoniaThreshold   = $device->amonia_threshold ?? 25.0;
+        $amoniaThreshold   = $device->amonia_threshold ?? 2.0;
         $humidityThreshold = $device->humidity_threshold ?? 90.0;
 
         // --- DHT22: Suhu (internal_temp dari DS18B20) ---
