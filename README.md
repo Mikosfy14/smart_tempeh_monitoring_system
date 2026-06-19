@@ -2,9 +2,23 @@
 **IoT-Based Tempe Fermentation Monitoring & Mitigation System**
 
 ![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
 ![ESP32](https://img.shields.io/badge/ESP32-000000?style=for-the-badge&logo=espressif&logoColor=white)
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+
+## 💻 Programming Languages
+![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![C++](https://img.shields.io/badge/C%2B%2B-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white)
+
+## 🌐 Tautan Penting (Project Links)
+
+[![Website](https://img.shields.io/badge/Website_Dashboard-Rizhomatix-blue?style=for-the-badge&logo=google-chrome&logoColor=white)](https://rizhomatix.web.id/)
+[![YouTube](https://img.shields.io/badge/Video_Demo_YouTube-Tonton-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/t_RRnhH6zRs)
+[![Drive](https://img.shields.io/badge/Laporan_Project-Google_Drive-emerald?style=for-the-badge&logo=google-drive&logoColor=white)](https://drive.google.com/file/d/1jbaLcjBhZlkBGzMOGSHs8R7WlZsWTxQP/view?usp=sharing)
+
+---
 
 ## 📖 Deskripsi Proyek
 **Rizhomatix** hadir untuk menyelesaikan masalah kegagalan panen dan kerugian finansial UMKM pengrajin tempe akibat pembusukan protein kedelai yang dipicu oleh suhu ekstrem eksotermik di dalam ruang fermentasi tradisional. 
@@ -48,16 +62,19 @@ Sistem siber-fisik ini bekerja dengan memanfaatkan mikrokontroler ESP32 yang ter
 
 ---
 
-### 📷 Arsitektur Diagram
-*(Catatan: Unggah gambar diagram alur sistem yang sudah direvisi ke folder repo, lalu ganti tautan ini)*
-`![Diagram Arsitektur Rizhomatix](link-gambar-diagram-kamu-disini.png)`
+### 📷 Arsitektur Sistem
+
+<img width="1481" height="687" alt="arsitektur-rizhomatix" src="https://github.com/user-attachments/assets/1ad63316-add0-4a2e-ba44-7b53952a6812" />
+
+---
+
+### 📷 Alur Data Sistem
+
+<img width="1411" height="767" alt="alur-data-integrasi-rizhomatix" src="https://github.com/user-attachments/assets/538cd260-b054-4429-9dfd-f1aed614283f" />
 
 ---
 
 ## 👨‍💻 Pengembang
-Proyek ini dikembangkan oleh **Muhammad Shafiq Dzakwan Ananda** sebagai pemenuhan Tugas Akhir / Ujian Akhir Semester untuk mata kuliah:
-- **Manajemen Proyek**
-- **Integrasi Aplikasi dan Informasi**
-- **Cloud Computing**
+Proyek ini dikembangkan oleh **Muhammad Shafiq Dzakwan Ananda**
 
 Program Studi Teknologi Informasi, Fakultas Vokasi, Universitas Brawijaya (2026).
