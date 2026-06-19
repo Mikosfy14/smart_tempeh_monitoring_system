@@ -113,10 +113,10 @@ bool sendTelemetry(float internalTemp, float amoniaLevel,
                    float roomTemp, float humidity, String &response) {
   StaticJsonDocument<200> jsonDoc;
   jsonDoc["device_id"]     = deviceIdReal;
-  jsonDoc["internal_temp"] = serializedJsonString(String(internalTemp, 1));
-  jsonDoc["amonia_level"]  = serializedJsonString(String(amoniaLevel, 1));
-  jsonDoc["room_temp"]     = serializedJsonString(String(roomTemp, 1));
-  jsonDoc["humidity"]      = serializedJsonString(String(humidity, 1));
+  jsonDoc["internal_temp"] = internalTemp;
+  jsonDoc["amonia_level"]  = amoniaLevel;
+  jsonDoc["room_temp"]     = roomTemp;
+  jsonDoc["humidity"]      = humidity;
 
   String requestBody;
   serializeJson(jsonDoc, requestBody);
