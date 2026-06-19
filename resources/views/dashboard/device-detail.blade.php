@@ -282,6 +282,7 @@
                     <button class="chart-range-btn active" data-range="6h">6h</button>
                     <button class="chart-range-btn" data-range="24h">24h</button>
                     <button class="chart-range-btn" data-range="7d">7d</button>
+                    <button class="chart-reset-btn" id="chart-reset-btn" title="Reset grafik (clear data abnormal)">Reset</button>
                 </div>
             </div>
 
@@ -524,6 +525,24 @@
 <style>
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+/* Chart Reset Button */
+.chart-reset-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(239,68,68,0.3);
+    background: rgba(239,68,68,0.08);
+    color: #f87171;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 4px;
+}
+.chart-reset-btn:hover {
+    background: rgba(239,68,68,0.2);
+    border-color: rgba(239,68,68,0.5);
 }
 
 /* Chart Filter Toggles */
@@ -886,6 +905,30 @@ document.querySelectorAll('.chart-range-btn').forEach(btn => {
 });
 
 // ============================================
+// CHART RESET BUTTON
+// ============================================
+let chartResetUntil = null; // timestamp sampai kapan chart di-reset
+
+document.getElementById('chart-reset-btn').addEventListener('click', function() {
+    // Kosongkan semua data di chart
+    sensorChart.data.labels = [];
+    sensorChart.data.datasets.forEach(ds => { ds.data = []; });
+    sensorChart.update();
+
+    // Set timer: jangan refresh chart selama 10 detik agar user lihat chart bersih
+    chartResetUntil = Date.now() + 10000;
+
+    // Ubah tombol jadi "Direset" sementara
+    this.textContent = 'Direset';
+    this.style.pointerEvents = 'none';
+    setTimeout(() => {
+        this.textContent = 'Reset';
+        this.style.pointerEvents = 'auto';
+        chartResetUntil = null;
+    }, 10000);
+});
+
+// ============================================
 // CHART FILTER TOGGLES
 // ============================================
 document.querySelectorAll('.chart-filter-btn').forEach(btn => {
@@ -911,7 +954,7 @@ async function pollSensorData() {
         const data = await res.json();
         
         const thresholdTemp = {{ $device->temp_threshold ?? 35.0 }};
-        const thresholdAmonia = {{ $device->amonia_threshold ?? 25.0 }};
+        const thresholdAmonia = {{ $device->amonia_threshold ?? 2.0 }};
         const thresholdHumidity = {{ $device->humidity_threshold ?? 90.0 }};
 
         if (data.sensors) {
@@ -1018,6 +1061,9 @@ function updateBatchStatus(batchData) {
 setInterval(refreshChart, 5000);
 
 async function refreshChart() {
+    // Jangan refresh jika chart sedang dalam mode reset
+    if (chartResetUntil && Date.now() < chartResetUntil) return;
+
     try {
         const res = await fetch(`/api/dashboard/chart?device_id=${DEVICE_ID}&range=${currentRange}`, {
             headers: { 'X-CSRF-TOKEN': window.csrfToken, 'Accept': 'application/json' }
