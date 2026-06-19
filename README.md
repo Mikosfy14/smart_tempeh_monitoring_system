@@ -1,58 +1,63 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🌱 Rizhomatix 
+**IoT-Based Tempe Fermentation Monitoring & Mitigation System**
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
+![ESP32](https://img.shields.io/badge/ESP32-000000?style=for-the-badge&logo=espressif&logoColor=white)
+![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
 
-## About Laravel
+## 📖 Deskripsi Proyek
+**Rizhomatix** hadir untuk menyelesaikan masalah kegagalan panen dan kerugian finansial UMKM pengrajin tempe akibat pembusukan protein kedelai yang dipicu oleh suhu ekstrem eksotermik di dalam ruang fermentasi tradisional. 
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Sistem siber-fisik ini bekerja dengan memanfaatkan mikrokontroler ESP32 yang terhubung pada rangkaian sensor DS18B20, DHT22, dan MQ-135 untuk membaca parameter temperatur, kelembaban udara, serta lonjakan gas amonia ($NH_3$) secara otonom. Data sensor dikirim via HTTP POST JSON terenkripsi ke backend Laravel di VPS Ubuntu 24.04 LTS untuk divisualisasikan pada *dashboard web*. Jika terdeteksi anomali ambang batas, server akan langsung memicu modul relay untuk mengaktifkan kipas pendingin 12V DC sekaligus menembak API lokal WhatsApp Gateway berbasis Node.js untuk mengirimkan alarm darurat ke ponsel pengguna. Manfaat utama proyek ini adalah memodernisasi cara kerja tradisional melalui pengawasan otonom 24 jam penuh, menekan angka produk afkir, serta efisiensi biaya operasional.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ✨ Fitur Utama
+- **Real-time Telemetry:** Pemantauan suhu, kelembaban, dan gas amonia secara *real-time*.
+- **Auto-Mitigation:** Otomatisasi pengaktifan kipas pembuang panas (*exhaust*) melalui relay saat suhu mencapai batas kritis (>33°C).
+- **Self-Hosted WhatsApp Gateway:** Notifikasi alarm darurat secara instan melalui WhatsApp menggunakan *microservices* mandiri tanpa biaya langganan API pihak ketiga.
+- **Smart Dashboard:** Antarmuka web responsif untuk manajemen perangkat (klaim Device ID), grafik histori, dan analisis kurva kematangan *batch* fermentasi.
+- **Reporting:** Ekspor laporan hasil fermentasi dalam format PDF.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🛠️ Arsitektur Teknologi
 
-## Learning Laravel
+### Perangkat Keras (Hardware)
+- **ESP32 NodeMCU** (Mikrokontroler Utama)
+- **DS18B20** (Sensor Suhu Biji Kedelai / Cairan)
+- **DHT22** (Sensor Suhu & Kelembaban Udara Inkubator)
+- **MQ-135** (Sensor Kualitas Udara / Deteksi Gas Amonia)
+- **Modul Relay 1-Channel** (Pengontrol Aktuator)
+- **Kipas DC 12V** (Aktuator Pendingin)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Perangkat Lunak & Cloud (Software Stack)
+- **Backend & Web:** Laravel 11 (PHP), MySQL/MariaDB
+- **WhatsApp Gateway:** Node.js, Express, `whatsapp-web.js`, Puppeteer (Headless Browser X11)
+- **Server Deployment:** VPS Linux Ubuntu 24.04 LTS
+- **Process Manager:** PM2 (menjaga Node.js tetap berjalan di latar belakang)
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## ⚙️ Alur Kerja Sistem (System Workflow)
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+1. **Pembacaan Sensor:** ESP32 membaca data dari sensor DS18B20, DHT22, dan MQ-135.
+2. **Transmisi API:** ESP32 mengirim data sensor ke endpoint REST API Laravel `/api/telemetry` dalam format JSON yang dilengkapi dengan API key enkripsi.
+3. **Pemrosesan Backend:** Backend Laravel memvalidasi request, menyimpan data ke database, mengecek *threshold*, memperbarui status kipas, dan menjalankan analisis kematangan *batch* fermentasi.
+4. **Visualisasi Dashboard:** Dashboard web mengambil data terbaru secara dinamis melalui endpoint seperti `/api/dashboard/live` dan `/api/dashboard/chart`.
+5. **Trigger Notifikasi:** Jika terdapat kondisi abnormal (misal: amonia tinggi / suhu panas), Laravel mengirim request HTTP POST internal ke WhatsApp Gateway lokal yang berjalan di port 3000 pada VPS.
+6. **Eksekusi Gateway:** Aplikasi Node.js WhatsApp Gateway memproses *request* di bawah pengelolaan PM2.
+7. **Virtual Rendering:** WhatsApp Gateway menjalankan *Headless Browser Puppeteer* dengan dependensi X11 untuk merender antarmuka WhatsApp Web secara virtual.
+8. **Pengiriman Pesan:** Sistem secara otonom mengirimkan notifikasi teks terformat (*Alert Alarm*) langsung ke nomor WhatsApp pengguna yang ditarik secara dinamis dari database.
+9. **Umpan Balik Aktuator:** ESP32 melakukan *polling* status kontrol kipas melalui endpoint `/api/device/status`, kemudian menyalakan atau mematikan kipas sesuai instruksi server untuk memitigasi suhu panas.
 
-## Agentic Development
+---
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### 📷 Arsitektur Diagram
+*(Catatan: Unggah gambar diagram alur sistem yang sudah direvisi ke folder repo, lalu ganti tautan ini)*
+`![Diagram Arsitektur Rizhomatix](link-gambar-diagram-kamu-disini.png)`
 
-```bash
-composer require laravel/boost --dev
+---
 
-php artisan boost:install
-```
+## 👨‍💻 Pengembang
+Proyek ini dikembangkan oleh **Muhammad Shafiq Dzakwan Ananda** sebagai pemenuhan Tugas Akhir / Ujian Akhir Semester untuk mata kuliah:
+- **Manajemen Proyek**
+- **Integrasi Aplikasi dan Informasi**
+- **Cloud Computing**
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Program Studi Teknologi Informasi, Fakultas Vokasi, Universitas Brawijaya (2026).
