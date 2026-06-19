@@ -28,16 +28,16 @@
 // ============================================================================
 
 // URL API endpoint (tanpa trailing slash)
-$API_URL = 'https://e-tempeh.my.id/api/telemetry';
+$API_URL = 'https://rizhomatix.web.id/api/telemetry';
 
 // API Key (harus sama dengan ESP32_API_KEY di .env VPS)
-$API_KEY = 'mikosfy-esp32-secret-2024';
+$API_KEY = 'SmArTTeMPehSystem4891231!!?!';
 
 // Device ID yang terdaftar di master_devices
-$DEVICE_ID = 'TEMPE-001';
+$DEVICE_ID = 'ESP32-002';
 
 // Interval pengiriman data dalam detik (default, bisa di-override per fase)
-$INTERVAL_SECONDS = 5;
+$INTERVAL_SECONDS = 2.5;
 
 // Jeda antar fase dalam detik (untuk memberi waktu expert system memproses)
 $PHASE_PAUSE_SECONDS = 3;
@@ -46,27 +46,31 @@ $PHASE_PAUSE_SECONDS = 3;
 //  SKENARIO ALERT DEMO — Sesuai logic FermentationPredictionService & WhatsAppService
 // ============================================================================
 //
-//  FASE  1: NORMAL            (20 data × 5s = 1m 40s)
+//  FASE  1: NORMAL            (20 data × 2.5s = 50s)
 //           Suhu ~31°C, amonia ~8 ppm, humidity ~75%
 //           → Semua di bawah threshold, tidak ada alert
 //
-//  FASE  2: SUHU NAIK         (20 data × 5s = 1m 40s)
+//  FASE  2: SUHU NAIK         (20 data × 2.5s = 50s)
 //           Suhu 31→37°C, amonia ~20 ppm
 //           → Trigger: temp > 35°C → Fan AUTO ON + WA alert suhu
 //
-//  FASE  3: AMONIA NAIK       (10 data × 5s = 50s)
+//  FASE  3: AMONIA NAIK       (10 data × 2.5s = 25s)
 //           Amonia 25→55 ppm, suhu ~37°C
 //           → Trigger: amonia > 25 ppm → WA alert amonia
 //
-//  FASE  4: SEMANGIT           (15 data × 5s = 1m 15s)
+//  FASE  4: SEMANGIT           (15 data × 2.5s = 37.5s)
 //           Amonia 60→130 ppm, suhu ~38°C
 //           → Trigger: amonia > 100 ppm → Batch → semangit + WA alert
 //
-//  FASE  5: FAILED             (10 data × 5s = 50s)
+//  FASE  5: FAILED             (10 data × 2.5s = 25s)
 //           Amonia 200→280 ppm
 //           → Trigger: amonia > 250 ppm → Batch → failed + WA alert
 //
-//  Total: ~6 menit (tekan Enter di setiap pergantian fase)
+//  FASE  6: KEMBALI NORMAL     (15 data × 2.5s = 37.5s)
+//           Suhu 37→31°C, amonia 200→10 ppm, humidity 80→72%
+//           → Trigger: WA recovery notification "kembali normal"
+//
+//  Total: ~4 menit (tekan Enter di setiap pergantian fase)
 //
 //  ============================================================================
 
@@ -183,14 +187,14 @@ function getScenario(): array {
         // FASE 1: NORMAL — Kondisi awal fermentasi
         // ════════════════════════════════════════════════════════════════
         // Semua sensor di bawah threshold. Tidak ada alert.
-        // 20 data × 5 detik = 1 menit 40 detik
+        // 20 data × 2.5 detik = 50 detik
         [
             'name'     => 'NORMAL',
             'desc'     => 'Kondisi awal fermentasi. Semua sensor stabil di bawah threshold.',
             'color'    => 'green',
             'icon'     => '🟢',
             'count'    => 20,
-            'interval' => 5,
+            'interval' => 2.5,
             'gen'      => function(int $i) {
                 return [
                     'internal_temp' => noisy(31.5, 1.5),   // < 35°C (threshold)
@@ -207,14 +211,14 @@ function getScenario(): array {
         // Suhu naik gradual melewati 35°C (temp_threshold default).
         // → ApiController: internal_temp > tempThreshold → Fan AUTO ON
         // → WhatsAppService: sendAlert($user, $device, 'temp', $value)
-        // 20 data × 5 detik = 1 menit 40 detik
+        // 20 data × 2.5 detik = 50 detik
         [
             'name'     => 'SUHU NAIK',
             'desc'     => 'Suhu melewati 35°C → Fan AUTO ON + WhatsApp alert suhu.',
             'color'    => 'yellow',
             'icon'     => '🌡',
             'count'    => 20,
-            'interval' => 5,
+            'interval' => 2.5,
             'gen'      => function(int $i) {
                 $progress = $i / 19; // 0 → 1
                 $temp = 31.5 + ($progress * 5.5); // 31.5 → 37°C (lewati 35°C)
@@ -233,14 +237,14 @@ function getScenario(): array {
         // Amonia naik melewati 25 ppm (amonia_threshold default).
         // → ApiController: amonia_level > amoniaThreshold
         // → WhatsAppService: sendAlert($user, $device, 'amonia', $value)
-        // 10 data × 5 detik = 50 detik
+        // 10 data × 2.5 detik = 25 detik
         [
             'name'     => 'AMONIA NAIK',
             'desc'     => 'Amonia melewati 25 ppm → WhatsApp alert amonia.',
             'color'    => 'amber',
             'icon'     => '💨',
             'count'    => 10,
-            'interval' => 5,
+            'interval' => 2.5,
             'gen'      => function(int $i) {
                 $progress = $i / 9;
                 $amonia = 18.0 + ($progress * 37.0); // 18 → 55 ppm (lewati 25 ppm)
@@ -261,14 +265,14 @@ function getScenario(): array {
         // → FermentationPredictionService: checkRuleSemangit() = true
         // → Batch status: active → semangit
         // → WhatsAppService: sendBatchTransitionNotification('semangit')
-        // 15 data × 5 detik = 1 menit 15 detik
+        // 15 data × 2.5 detik = 37.5 detik
         [
             'name'     => 'SEMANGIT',
             'desc'     => 'Amonia > 100 ppm → Expert system trigger SEMANGIT + WhatsApp batch alert.',
             'color'    => 'yellow',
             'icon'     => '⚠️',
             'count'    => 15,
-            'interval' => 5,
+            'interval' => 2.5,
             'gen'      => function(int $i) {
                 $progress = $i / 14;
                 $amonia = 60.0 + ($progress * 70.0); // 60 → 130 ppm (lewati 100 ppm)
@@ -288,14 +292,14 @@ function getScenario(): array {
         // → FermentationPredictionService: checkRuleFailed() = true
         // → Batch status: semangit → failed
         // → WhatsAppService: sendBatchTransitionNotification('failed')
-        // 10 data × 5 detik = 50 detik
+        // 10 data × 2.5 detik = 25 detik
         [
             'name'     => 'FAILED',
             'desc'     => 'Amonia > 250 ppm → Expert system trigger FAILED + WhatsApp batch alert.',
             'color'    => 'red',
             'icon'     => '🔴',
             'count'    => 10,
-            'interval' => 5,
+            'interval' => 2.5,
             'gen'      => function(int $i) {
                 $progress = $i / 9;
                 $amonia = 200.0 + ($progress * 80.0); // 200 → 280 ppm (lewati 250 ppm)
@@ -304,6 +308,36 @@ function getScenario(): array {
                     'amonia_level'  => noisy($amonia, 8.0),
                     'room_temp'     => noisy(29.0, 0.5),
                     'humidity'      => noisy(80.0, 2.0),
+                ];
+            },
+        ],
+
+        // ════════════════════════════════════════════════════════════════
+        // FASE 6: KEMBALI NORMAL — Trigger WhatsAppService Recovery
+        // ════════════════════════════════════════════════════════════════
+        // Semua sensor kembali di bawah threshold setelah sebelumnya alert.
+        // → ApiController: suhu < tempThreshold → sendRecoveryNotification('temp')
+        // → ApiController: amonia < amoniaThreshold → sendRecoveryNotification('amonia')
+        // → Fan AUTO OFF (karena suhu sudah normal)
+        // → WhatsApp: "Suhu/Amonia KEMBALI NORMAL"
+        // 15 data × 2.5 detik = 37.5 detik
+        [
+            'name'     => 'KEMBALI NORMAL',
+            'desc'     => 'Semua sensor kembali normal → WA recovery notification + Fan OFF.',
+            'color'    => 'green',
+            'icon'     => '✅',
+            'count'    => 15,
+            'interval' => 2.5,
+            'gen'      => function(int $i) {
+                $progress = $i / 14; // 0 → 1
+                $temp = 37.0 - ($progress * 6.0);   // 37 → 31°C (kembali normal)
+                $amonia = 200.0 - ($progress * 190.0); // 200 → 10 ppm (kembali normal)
+                $humidity = 80.0 - ($progress * 8.0);  // 80 → 72% (kembali normal)
+                return [
+                    'internal_temp' => noisy($temp, 0.8),
+                    'amonia_level'  => noisy($amonia, 5.0),
+                    'room_temp'     => noisy(28.0, 0.5),
+                    'humidity'      => noisy($humidity, 2.0),
                 ];
             },
         ],
@@ -519,10 +553,11 @@ if (!empty($alertsLog)) {
 
 echo "\n";
 echo bold("  Fitur yang berhasil didemo:\n");
-echo "    ✓ Grafik real-time di dashboard (update per 3-5 detik)\n";
+echo "    ✓ Grafik real-time di dashboard (update per 2.5 detik)\n";
 echo "    ✓ Data sensor masuk ke database\n";
 if (!empty($alertsLog)) {
     echo "    ✓ Threshold alerts (WhatsApp notification)\n";
+    echo "    ✓ Recovery notifications (WhatsApp: kembali normal)\n";
 }
 echo "    ✓ Fan control AUTO/MANUAL\n";
 echo "    ✓ Expert system batch prediction\n";
