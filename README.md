@@ -14,10 +14,9 @@
 
 ## 🌐 Project Links
 [![Website](https://img.shields.io/badge/Website_Dashboard-Rizhomatix-blue?style=for-the-badge&logo=google-chrome&logoColor=white)](https://rizhomatix.web.id/)
-[![YouTube](https://img.shields.io/badge/Video_Demo_YouTube-Watch-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/t_RRnhH6zRs)
+[![YouTube](https://img.shields.io/badge/Demo_Video-Watch-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/t_RRnhH6zRs)
 [![Drive](https://img.shields.io/badge/Project_Report-Google_Drive-emerald?style=for-the-badge&logo=google-drive&logoColor=white)](https://drive.google.com/file/d/1jbaLcjBhZlkBGzMOGSHs8R7WlZsWTxQP/view?usp=sharing)
 
----
 
 ## 📖 Project Description
 **Rizhomatix** is designed to solve fermentation process failures and financial losses faced by micro, small, and medium enterprises (MSMEs) in the tempe production industry due to soybean protein rotting triggered by exothermic extreme heat in traditional fermentation rooms.
@@ -61,19 +60,16 @@ This system utilizes an ESP32 microcontroller connected to a sensor array (DS18B
 8. **Message Delivery:** The backend script automatically constructs formatted text alerts and dispatches the warning directly to the device owner's registered WhatsApp phone number pulled dynamically from the database rows.
 9. **Actuator Feedback Loop:** Concurrently, the ESP32 performs routine interval *polling* requests toward the `/api/device/status` endpoint to pull the latest fan command from the server, switching the physical relay on or off locally to mitigate extreme heat.
 
----
 
 ### 📷 System Architecture
 
 <img width="1481" height="687" alt="arsitektur-rizhomatix" src="https://github.com/user-attachments/assets/1ad63316-add0-4a2e-ba44-7b53952a6812" />
 
----
 
 ### 📷 System Data Workflow
 
 <img width="1411" height="767" alt="alur-data-integrasi-rizhomatix" src="https://github.com/user-attachments/assets/538cd260-b054-4429-9dfd-f1aed614283f" />
 
----
 
 ## 🚀 Future Development Plans
 To transition the Rizhomatix ecosystem from a prototype into a production-grade enterprise commercial product, the following advancements are planned for future releases:
@@ -85,6 +81,8 @@ To transition the Rizhomatix ecosystem from a prototype into a production-grade 
 ### 2. Machine Learning Deployment at the Edge & Cloud
 * **Cloud-Based Anomaly Detection Models:** Upgrade the rule-based Expert System script into an advanced Machine Learning prediction pipeline (e.g., utilizing isolation forests or recurrent neural networks). This system will continuously analyze long-term telemetry multivariate trends (temperature, humidity, ammonia curves) to forecast precisely the exact minute of peak tempeh maturity, drastically mitigating human error.
 * **TinyML Integration:** Explore the integration of low-power Edge AI inference scripts directly inside the ESP32 microcontroller, enabling autonomous ambient pattern decisions even during server or network connection downtime intervals.
+
+
 
 
 Information Technology Study Program, Faculty of Vocational Studies, Universitas Brawijaya (2026).
